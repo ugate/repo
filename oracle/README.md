@@ -66,7 +66,7 @@ TNSPING XE
 
 
 ### Node.js + Travis-CI
-[`travis-ci`](https://travis-ci.com/) integration will automatically install Oracle XE localy before CI testing using the following  `.travis.yml` snippet below. Special `env` values are automatically set for `oracledb` path resolution set when auto executing the provided [install.sh](https://raw.githubusercontent.com/ugate/repo/master/oracle/install.sh).
+[`travis-ci`](https://travis-ci.com/) integration will automatically install Oracle XE localy before CI testing using the following  `.travis.yml` snippet below. Special `env` values are automatically set for `oracledb` path resolution set when auto executing the provided [install.sh](https://raw.githubusercontent.com/ugate/repo/master/oracle/install.sh). __Ensure `ORA_REPO_VER` is set to the desired install script version (tagged release in the repo).__
 
 ```yaml
 sudo: required
@@ -75,7 +75,8 @@ dist: xenial
 # paths required by the oracledb module
 env:
   - ORACLE_HOME=/u01/app/oracle/product/11.2.0/xe ORACLE_SID=XE OCI_LIB_DIR=/u01/app/oracle/product/11.2.0/xe/lib LD_LIBRARY_PATH=/u01/app/oracle/product/11.2.0/xe/lib
+  - ORA_REPO_VER=v1.0.0
 before_install:
-  - wget https://raw.githubusercontent.com/ugate/repo/master/oracle/install.sh
+  - wget https://raw.githubusercontent.com/ugate/repo/$ORA_REPO_VER/oracle/install.sh
   - bash ./install.sh
 ```
