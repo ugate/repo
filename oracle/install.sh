@@ -39,4 +39,5 @@ sudo usermod -aG dba $USER
 # localhost:1521
 # user/pass: travis/travis
 # for SYSDBA role - user/pass: sys/travis
-"$ORACLE_HOME/bin/sqlplus" -L -S / AS SYSDBA @user.sql $ORA_REPO_USER
+chmod u+x user.sql
+"$ORACLE_HOME/bin/sqlplus" -L -S / AS SYSDBA /nolog @user.sql
