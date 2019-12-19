@@ -36,8 +36,18 @@ sudo usermod -aG dba $USER
 
 ( echo ; echo ; echo travis ; echo travis ; echo n ) | sudo AWK='/usr/bin/awk' /etc/init.d/oracle-xe configure
 
-# localhost:1521
-# user/pass: travis/travis
-# for SYSDBA role - user/pass: sys/travis
-chmod u+x user.sql
-"$ORACLE_HOME/bin/sqlplus" -L -S / AS SYSDBA /nolog @user.sql
+# grant permissions for ORA_REPO_USER
+"$ORACLE_HOME/bin/sqlplus" -L -S / AS SYSDBA /nolog @user.sql $ORA_REPO_USER
+
+DB_USERS=`"$ORACLE_HOME/bin/sqlplus" -L -S / AS SYSDBA <<EOF
+SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
+SELECT * FROM dba_users;
+EXIT;
+EOF`
+if [ -z "$DB_USERS" ]; then
+  echo "No users returned from database"
+  exit 0
+else
+  echo $DB_USERS
+fi
+echo $DB_USERS
