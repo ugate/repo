@@ -58,7 +58,7 @@ LISTENER =
 DEFAULT_SERVICE_LISTENER = (XE)
 ```
 
-__Once the above changes are made the `OracleXETNSListener` Windows service.__ The following comand should return the resolved changes made to the `listener.ora` using the TNSNAMES adapter:
+__Once the above changes are made the `OracleXETNSListener` Windows service must be restarted for the changes to take effect.__ The following comand should return the resolved changes made to the `listener.ora` using the TNSNAMES adapter:
 
 ```cmd
 TNSPING XE
