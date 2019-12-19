@@ -5,7 +5,7 @@ Testing is conducted under a _lightweight_ version of the Oracle DB called [Orac
 In order to use the provided installer each person using the test suite must accept the [OTN License Agreement for Oracle Database Express Edition](https://www.oracle.com/downloads/licenses/database-11g-express-license.html).
 
 #### Windows
-The installation script is not intended for Windows users. However, the installation instructions provided by Oracle are fairly simple using their provided installer.
+The installation script is not intended for Windows users. However, the [installation instructions provided by Oracle](https://www.oracle.com/database/technologies/appdev/xe/quickstart.html) are fairly simple using their provided installer.
 
 #### Linux
 The resources that reside in the `oracle` repository are intended to host the test installation files for installing Oracle XE on Linux with a pre-installed C++ compiler (e.g. Xenial). Using the provided resources you are agreeing to the [OTN License Agreement for Oracle Database Express Edition](https://www.oracle.com/downloads/licenses/database-11g-express-license.html).
