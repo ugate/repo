@@ -39,8 +39,5 @@ sudo usermod -aG dba $USER
 # localhost:1521
 # user/pass: travis/travis
 # for SYSDBA role - user/pass: sys/travis
-"$ORACLE_HOME/bin/sqlplus" -L -S / AS SYSDBA <<SQL
-CREATE USER travis IDENTIFIED BY travis;
-GRANT CONNECT, RESOURCE TO travis;
-GRANT EXECUTE ON SYS.DBMS_LOCK TO travis;
-SQL
+"$ORACLE_HOME/bin/sqlplus" -L -S / AS SYSDBA
+@user.sql $ORA_REPO_VER

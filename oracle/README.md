@@ -2,7 +2,10 @@
 Contains a test installation script using a _lightweight_ version of the Oracle DB called [Oracle XE (Xpress Edition)](https://www.oracle.com/database/technologies/appdev/xe.html). Although there are newer versions of Oracle XE, the `11g` versions is much more compact in size and is used by the installation script for this purpose.
 
 ### Installation
-In order to use the provided installer each person and/or organization using the test suite must accept the [OTN License Agreement for Oracle Database Express Edition](https://www.oracle.com/downloads/licenses/database-11g-express-license.html).
+In order to use the provided installer each person and/or organization using the test suite must accept the [OTN License Agreement for Oracle Database Express Edition](https://www.oracle.com/downloads/licenses/database-11g-express-license.html). __The following environmental variables must be set in order to run `install.sh`:__
+
+- `ORA_REPO_VER` - The tagged `repo` version of the `install.sh` script to run
+- `ORA_REPO_USER` - The user that will be granted acccess to the `XE` database
 
 #### Windows
 The installation script is not intended for Windows users. However, the [installation instructions provided by Oracle](https://www.oracle.com/database/technologies/appdev/xe/quickstart.html) are fairly simple using their provided installer.
@@ -65,7 +68,7 @@ TNSPING XE
 ```
 
 
-### Node.js + Travis-CI
+### Node.js + Travis-CI<sub id="ci"></sub>
 [`travis-ci`](https://travis-ci.com/) integration will automatically install Oracle XE localy before CI testing using the following  `.travis.yml` snippet below. Special `env` values are automatically set for `oracledb` path resolution set when auto executing the provided [install.sh](https://raw.githubusercontent.com/ugate/repo/master/oracle/install.sh). __Ensure `ORA_REPO_VER` is set to the desired install script version (tagged release in the repo).__
 
 ```yaml
@@ -76,6 +79,7 @@ dist: xenial
 env:
   - ORACLE_HOME=/u01/app/oracle/product/11.2.0/xe ORACLE_SID=XE OCI_LIB_DIR=/u01/app/oracle/product/11.2.0/xe/lib LD_LIBRARY_PATH=/u01/app/oracle/product/11.2.0/xe/lib
   - ORA_REPO_VER=v1.0.0
+  - ORA_REPO_USER=travis
 before_install:
   - wget https://raw.githubusercontent.com/ugate/repo/$ORA_REPO_VER/oracle/install.sh
   - bash ./install.sh
