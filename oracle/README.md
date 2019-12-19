@@ -1,8 +1,8 @@
 ### Testing with Oracle XE Database
-Testing is conducted under a _lightweight_ version of the Oracle DB called [Oracle XE (Xpress Edition)](https://www.oracle.com/database/technologies/appdev/xe.html). Although there are newer versions of Oracle XE, the `11g` versions is much more compact in size and is used by the installation script for this purpose.
+Contains a test installation script using a _lightweight_ version of the Oracle DB called [Oracle XE (Xpress Edition)](https://www.oracle.com/database/technologies/appdev/xe.html). Although there are newer versions of Oracle XE, the `11g` versions is much more compact in size and is used by the installation script for this purpose.
 
 ### Installation
-In order to use the provided installer each person using the test suite must accept the [OTN License Agreement for Oracle Database Express Edition](https://www.oracle.com/downloads/licenses/database-11g-express-license.html).
+In order to use the provided installer each person and/or organization using the test suite must accept the [OTN License Agreement for Oracle Database Express Edition](https://www.oracle.com/downloads/licenses/database-11g-express-license.html).
 
 #### Windows
 The installation script is not intended for Windows users. However, the [installation instructions provided by Oracle](https://www.oracle.com/database/technologies/appdev/xe/quickstart.html) are fairly simple using their provided installer.
