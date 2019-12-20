@@ -41,5 +41,3 @@ echo 'OS_AUTHENT_PREFIX=""' | sudo tee -a "$ORACLE_HOME/config/scripts/init.ora"
 sudo usermod -aG dba $USER
 
 ( echo ; echo ; echo travis ; echo travis ; echo n ) | sudo AWK='/usr/bin/awk' /etc/init.d/oracle-xe configure
-
-sh ./grant.sh
