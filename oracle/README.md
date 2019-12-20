@@ -15,20 +15,22 @@ The resources that reside in the `oracle` repository are intended to host the te
 
 - `install.sh` - Installs Oracle XE
 - `oracle-xe-###.rpm.zip.XXX` - The RPM installation files separated by consecutive parts for accessibility/file size purposes
+- `grant.sh` - Grants database permissions to the current OS user (calls `grant.sql`) and outputs the current DB users
+- `grant.sql` - Grants database permissions to a specified user (passed in as first argument)
 
-Once the `install.sh` is ran Oracle XE should be accessible using the following:
+Once the `install.sh` is ran Oracle XE should be accessible using the following (`$USER` will translate to the current OS user):
 
 - __Host:__ `localhost:1521`
 - __Database:__ `XE`
-- __Username:__ `travis`
-- __Password:__ `travis`
+- __Username:__ `$USER`
+- __Password:__ `$USER`
 
 For the __SYSDBA__ role access:
 
 - __Host:__ `localhost:1521`
 - __Database:__ `XE`
 - __Username:__ `system`
-- __Password:__ `travis`
+- __Password:__ `$USER`
 
 #### Troubleshooting
 In some older versions of Oracle XE you may run into an __ORA-12505__ when connecting to the DB due to `listener.ora` missing `SID_DESC` for __XE__. To resolve this issue ensure that `listener.ora` (under the Oracle XE install directory) contains something similar to the following:
@@ -77,8 +79,10 @@ sudo: required
 dist: xenial
 # paths required by the oracledb module
 env:
-  -  ORA_REPO_VER=v1.0.0 ORA_REPO_USER=travis ORACLE_HOME=/u01/app/oracle/product/11.2.0/xe ORACLE_SID=XE OCI_LIB_DIR=/u01/app/oracle/product/11.2.0/xe/lib LD_LIBRARY_PATH=/u01/app/oracle/product/11.2.0/xe/lib
+  -  ORA_REPO_VER=v1.0.0 ORACLE_HOME=/u01/app/oracle/product/11.2.0/xe ORACLE_SID=XE OCI_LIB_DIR=/u01/app/oracle/product/11.2.0/xe/lib LD_LIBRARY_PATH=/u01/app/oracle/product/11.2.0/xe/lib
 before_install:
   - wget https://raw.githubusercontent.com/ugate/repo/$ORA_REPO_VER/oracle/install.sh
+  - wget https://raw.githubusercontent.com/ugate/repo/$ORA_REPO_VER/oracle/grant.sh
   - bash ./install.sh
+  - bash ./grant.sh
 ```

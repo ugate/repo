@@ -1,15 +1,19 @@
 #!/bin/sh -e
 
-echo "ORA_REPO_VER: $ORA_REPO_VER ORA_REPO_USER: $ORA_REPO_USER"
+export ORA_VER="11.2.0"
+export ORA_VER_EXP="$ORA_VER-1.0"
 
-wget -nv https://raw.githubusercontent.com/ugate/repo/$ORA_REPO_VER/oracle/oracle-xe-11.2.0-1.0.x86_64.rpm.zip.aa
-wget -nv https://raw.githubusercontent.com/ugate/repo/$ORA_REPO_VER/oracle/oracle-xe-11.2.0-1.0.x86_64.rpm.zip.ab
-wget -nv https://raw.githubusercontent.com/ugate/repo/$ORA_REPO_VER/oracle/oracle-xe-11.2.0-1.0.x86_64.rpm.zip.ac
-wget -nv https://raw.githubusercontent.com/ugate/repo/$ORA_REPO_VER/oracle/oracle-xe-11.2.0-1.0.x86_64.rpm.zip.ad
-cat oracle-xe-11.2.0-1.0.x86_64.rpm.zip.* > oracle-xe-11.2.0-1.0.x86_64.rpm.zip
+echo "Installer $ORA_REPO_VER"
+echo "Installing Oracle XE version $ORA_VER"
 
-export ORACLE_FILE="oracle-xe-11.2.0-1.0.x86_64.rpm.zip"
-export ORACLE_HOME="/u01/app/oracle/product/11.2.0/xe"
+wget -nv https://raw.githubusercontent.com/ugate/repo/$ORA_REPO_VER/oracle/oracle-xe-$ORA_VER_EXP.x86_64.rpm.zip.aa
+wget -nv https://raw.githubusercontent.com/ugate/repo/$ORA_REPO_VER/oracle/oracle-xe-$ORA_VER_EXP.x86_64.rpm.zip.ab
+wget -nv https://raw.githubusercontent.com/ugate/repo/$ORA_REPO_VER/oracle/oracle-xe-$ORA_VER_EXP.x86_64.rpm.zip.ac
+wget -nv https://raw.githubusercontent.com/ugate/repo/$ORA_REPO_VER/oracle/oracle-xe-$ORA_VER_EXP.x86_64.rpm.zip.ad
+cat oracle-xe-$ORA_VER_EXP.x86_64.rpm.zip.* > oracle-xe-$ORA_VER_EXP.x86_64.rpm.zip
+
+export ORACLE_FILE="oracle-xe-$ORA_VER_EXP.x86_64.rpm.zip"
+export ORACLE_HOME="/u01/app/oracle/product/$ORA_VER/xe"
 export ORACLE_SID=XE
 
 # hostname needs to be present in hosts or oracle installation will fail
@@ -38,20 +42,4 @@ sudo usermod -aG dba $USER
 
 ( echo ; echo ; echo travis ; echo travis ; echo n ) | sudo AWK='/usr/bin/awk' /etc/init.d/oracle-xe configure
 
-# connect as OS user as SYSDBA and grant permissions for ORA_REPO_USER
-"$ORACLE_HOME/bin/sqlplus" -L -S / AS SYSDBA @users.sql $ORA_REPO_USER
-
-# echo database users
-DB_USERS=`"$ORACLE_HOME/bin/sqlplus" -L -S / AS SYSDBA <<EOF
-SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
-SELECT USERNAME FROM dba_users;
-EXIT;
-EOF`
-if [ -z "$DB_USERS" ]; then
-  echo "No users returned from database"
-  exit 0
-else
-  echo $DB_USERS
-fi
-echo "Database Users:"
-echo $DB_USERS
+sh ./grant.sh
