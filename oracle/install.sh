@@ -1,5 +1,7 @@
 #!/bin/sh -e
 
+echo "ORA_REPO_VER: $ORA_REPO_VER ORA_REPO_USER: $ORA_REPO_USER"
+
 wget -nv https://raw.githubusercontent.com/ugate/repo/$ORA_REPO_VER/oracle/oracle-xe-11.2.0-1.0.x86_64.rpm.zip.aa
 wget -nv https://raw.githubusercontent.com/ugate/repo/$ORA_REPO_VER/oracle/oracle-xe-11.2.0-1.0.x86_64.rpm.zip.ab
 wget -nv https://raw.githubusercontent.com/ugate/repo/$ORA_REPO_VER/oracle/oracle-xe-11.2.0-1.0.x86_64.rpm.zip.ac
@@ -36,12 +38,13 @@ sudo usermod -aG dba $USER
 
 ( echo ; echo ; echo travis ; echo travis ; echo n ) | sudo AWK='/usr/bin/awk' /etc/init.d/oracle-xe configure
 
-# grant permissions for ORA_REPO_USER
-"$ORACLE_HOME/bin/sqlplus" -L -S / AS SYSDBA /nolog @user.sql $ORA_REPO_USER
+# connect as OS user as SYSDBA and grant permissions for ORA_REPO_USER
+"$ORACLE_HOME/bin/sqlplus" -L -S / AS SYSDBA @users.sql $ORA_REPO_USER
 
+# echo database users
 DB_USERS=`"$ORACLE_HOME/bin/sqlplus" -L -S / AS SYSDBA <<EOF
 SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
-SELECT * FROM dba_users;
+SELECT USERNAME FROM dba_users;
 EXIT;
 EOF`
 if [ -z "$DB_USERS" ]; then
@@ -50,4 +53,5 @@ if [ -z "$DB_USERS" ]; then
 else
   echo $DB_USERS
 fi
+echo "Database Users:"
 echo $DB_USERS
