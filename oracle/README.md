@@ -8,7 +8,11 @@ In order to use the provided installer each person and/or organization using the
 - `ORA_REPO_USER` - The user that will be granted acccess to the `XE` database
 
 #### Windows
-The installation script is not intended for Windows users. However, the [installation instructions provided by Oracle](https://www.oracle.com/database/technologies/appdev/xe/quickstart.html) are fairly simple using their provided installer.
+The installation script is not intended for Windows users. However, the [installation instructions provided by Oracle](https://www.oracle.com/database/technologies/appdev/xe/quickstart.html) are fairly simple using their provided installer. The following command can be executed to grant the current OS user access to the newly installed Oracle XE database (password will be the same as the username):
+
+```sql
+(echo CREATE USER %USERNAME% IDENTIFIED BY %USERNAME%; & echo GRANT CONNECT, RESOURCE TO %USERNAME%; & echo GRANT EXECUTE ON SYS.DBMS_LOCK TO %USERNAME%;) | sqlplus / AS SYSDBA
+```
 
 #### Linux
 The resources that reside in the `oracle` repository are intended to host the test installation files for installing Oracle XE on Linux with a pre-installed C++ compiler (e.g. Xenial). Using the provided resources you are agreeing to the [OTN License Agreement for Oracle Database Express Edition](https://www.oracle.com/downloads/licenses/database-11g-express-license.html).
@@ -16,7 +20,7 @@ The resources that reside in the `oracle` repository are intended to host the te
 - `install.sh` - Installs Oracle XE
 - `oracle-xe-###.rpm.zip.XXX` - The RPM installation files separated by consecutive parts for accessibility/file size purposes
 - `grant.sh` - Grants database permissions to the current OS user (calls `grant.sql`) and outputs the current DB users
-- `grant.sql` - Grants database permissions to a specified user (passed in as first argument)
+- `grant.sql` - Grants database permissions to a specified user (username is passed as first argument, password will be the same as the username)
 
 Once the `install.sh` is ran Oracle XE should be accessible using the following (`$USER` will translate to the current OS user):
 
@@ -35,7 +39,7 @@ For the __SYSDBA__ role access:
 #### Troubleshooting
 In some older versions of Oracle XE you may run into an __ORA-12505__ when connecting to the DB due to `listener.ora` missing `SID_DESC` for __XE__. To resolve this issue ensure that `listener.ora` (under the Oracle XE install directory) contains something similar to the following:
 
-```tns
+```sql
 SID_LIST_LISTENER =
   (SID_LIST =
     (SID_DESC =
@@ -65,7 +69,7 @@ DEFAULT_SERVICE_LISTENER = (XE)
 
 __Once the above changes are made the `OracleXETNSListener` Windows service must be restarted for the changes to take effect.__ The following comand should return the resolved changes made to the `listener.ora` using the TNSNAMES adapter:
 
-```cmd
+```bash
 TNSPING XE
 ```
 
