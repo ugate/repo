@@ -15,8 +15,8 @@ The following environmental variables can be set to control the installation:
 1. `MYSQL_MAJOR` (required) - The _major_ version of MySQL that will be installed
 1. `MYSQL_MINOR` (required) - The _minor_ version of MySQL that will be installed
 1. `MYSQL_PATCH` (required) - The _patch_ version of MySQL that will be installed
-1. `MYSQL_UID` (optional, defaults to the currently logged in username) - The username that will be used when creating the database name and MySQL user
-1. `MYSQL_PWD` (optional, defaults to a blank value) - The password that will be set on the MySQL user
+1. `MYSQL_UID` (optional, defaults to the currently logged in username) - The _username_ that will be used when creating the database name and MySQL user
+1. `MYSQL_PWD` (optional, defaults to a blank value) - The _password_ that will be set on the MySQL user
 
 ### Usage
 A simple inline script can be used to download and execute the installation scripts:

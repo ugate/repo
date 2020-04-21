@@ -23,10 +23,14 @@ echo "Installing PostgreSQL $PGSQL_VER"
 # install postgresql
 sudo apt-get install postgresql-$POSTGRESQL_MAJOR
 
+# capture the contents of pg_hba.conf
+HBA_PTH=`sudo su - postgres -c "psql -t -P format=unaligned -c \"show hba_file\""`
+
 # install auto creates postgres user (default install: --auth-local peer --auth-host scram-sha-256)
 # use the current unix user as the postgresql superuser unless it is already set or is postgres
 P_UID=`[[ -n "$POSTGRESQL_UID" ]] && echo $POSTGRESQL_UID || echo "$(whoami)"`
 P_PWD=`[[ -n "$POSTGRESQL_PWD" ]] && echo $POSTGRESQL_PWD || echo $P_UID`
+P_MTD=`[[ -n "$POSTGRESQL_AUTH_METHOD" ]] && echo $POSTGRESQL_AUTH_METHOD || echo "md5"`
 if [[ "${P_UID}" != "postgres" ]]; then
   echo "Creating PostgreSQL user/role $P_UID (grant all on ${P_UID} DB)"
   # using postgres cli, create default DB for user
@@ -36,10 +40,16 @@ if [[ "${P_UID}" != "postgres" ]]; then
   #sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE postgres TO ${P_UID}"
   sudo su - postgres -c "psql -c \"CREATE ROLE ${P_UID} WITH LOGIN SUPERUSER PASSWORD '{$P_PWD}'\""
   sudo su - postgres -c "psql -c \"GRANT ALL PRIVILEGES ON DATABASE ${P_UID} TO ${P_UID}\""
+
+  # allow password auth for local access
+  echo "local    ${P_UID}             ${P_UID}             127.0.0.1/32            ${P_MTD}" | sudo tee -a $HBA_PTH
+  echo "local    ${P_UID}             ${P_UID}             ::1/128            ${P_MTD}" | sudo tee -a $HBA_PTH
+
+  # reload the altered pg_hba.conf
+  sudo su - postgres -c "psql -c \"SELECT pg_reload_conf()\""
 fi
 
 # print the contents of pg_hba.conf
-HBA_PTH=`sudo su - postgres -c "psql -t -P format=unaligned -c \"show hba_file\""`
 sudo cat $HBA_PTH
 
-echo "Installed PostgreSQL $PGSQL_VER (accessible via sueruser: ${P_UID}, database: ${P_UID})"
+echo "Installed PostgreSQL $PGSQL_VER (accessible via sueruser: ${P_UID} using auth-method ${P_MTD} on database: ${P_UID})"
