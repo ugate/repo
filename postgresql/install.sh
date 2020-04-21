@@ -9,9 +9,12 @@ if [[ -z "${POSTGRESQL_MAJOR}" ]]; then
 fi
 
 echo "Uninstalling previous versions of PostgreSQL..."
-
-# uninstall any existing postgresql versions
-command -v "sudo apt-get --purge remove postgresql\*" >/dev/null 2>&1 || echo "No PostgreSQL uninstall required"
+{
+  # uninstall any existing postgresql versions
+  sudo apt-get --purge remove postgresql\*
+} || {
+  echo "No PostgreSQL uninstall required"
+}
 
 PGSQL_VER="$POSTGRESQL_MAJOR"
 
