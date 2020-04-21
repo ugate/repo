@@ -26,7 +26,7 @@ sudo apt-get install postgresql-$POSTGRESQL_MAJOR
 # install auto creates postgres user (default install: --auth-local peer --auth-host scram-sha-256)
 # use the current unix user as the postgresql superuser unless it is already set or is postgres
 P_UID=`[[ -n "$POSTGRESQL_UID" ]] && echo $POSTGRESQL_UID || echo "$(whoami)"`
-P_PWD=`[[ -n "$POSTGRESQL_PWD" ]] && echo $POSTGRESQL_PWD || echo ""`
+P_PWD=`[[ -n "$POSTGRESQL_PWD" ]] && echo $POSTGRESQL_PWD || echo $P_UID`
 if [[ "${P_UID}" != "postgres" ]]; then
   echo "Creating PostgreSQL user/role $P_UID (grant all on ${P_UID} DB)"
   # using postgres cli, create default DB for user
@@ -37,5 +37,8 @@ if [[ "${P_UID}" != "postgres" ]]; then
   sudo su - postgres -c "psql -c \"CREATE ROLE ${P_UID} WITH LOGIN SUPERUSER PASSWORD '{$P_PWD}'\""
   sudo su - postgres -c "psql -c \"GRANT ALL PRIVILEGES ON DATABASE ${P_UID} TO ${P_UID}\""
 fi
+
+# print the contents of pg_hba.conf
+sudo su - postgres -c "psql -t -P format=unaligned -c \"show hba_file\""
 
 echo "Installed PostgreSQL $PGSQL_VER (accessible via sueruser: ${P_UID}, database: ${P_UID})"
