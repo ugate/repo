@@ -40,6 +40,6 @@ fi
 
 # print the contents of pg_hba.conf
 HBA_PTH=`sudo su - postgres -c "psql -t -P format=unaligned -c \"show hba_file\""`
-cat $HBA_PTH
+sudo cat $HBA_PTH
 
 echo "Installed PostgreSQL $PGSQL_VER (accessible via sueruser: ${P_UID}, database: ${P_UID})"
