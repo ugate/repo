@@ -14,6 +14,7 @@ The following environmental variables can be set to control the installation:
 
 1. `POSTGRESQL_MAJOR` (required) - The _major_ version of PostgreSQL that will be installed
 1. `POSTGRESQL_UID` (optional, defaults to the currently logged in username) - The username that will be used when creating the database name and PostgreSQL user
+1. `POSTGRESQL_PWD` (optional, defaults to a blank value) - The password that will be set on the PostgreSQL user
 
 ### Usage
 A simple inline script can be used to download and execute the installation scripts:

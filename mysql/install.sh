@@ -10,7 +10,8 @@ fi
 
 echo "Uninstalling previous versions of MySQL..."
 
-sudo apt-get remove --purge mysql-server mysql-client mysql-common -y
+# uninstall any existing mysql versions
+command -v "sudo apt-get remove --purge mysql-server mysql-client mysql-common -y" >/dev/null 2>&1 || echo "No MySQL uninstall required"
 sudo apt-get autoremove -y
 sudo apt-get autoclean
 
@@ -38,11 +39,12 @@ mysql --version
 # install auto creates mysql user with a blank password
 # use the current unix user as the mysql user unless it is already set or is mysql
 P_UID=`[[ -n "$MYSQL_UID" ]] && echo $MYSQL_UID || echo "$(whoami)"`
+P_PWD=`[[ -n "$MYSQL_PWD" ]] && echo $MYSQL_PWD || echo ""`
 if [[ "${P_UID}" != "mysql" ]]; then
   echo "Creating MySQL user $P_UID (grant all on ${P_UID} DB)"
   # mysql -u root
   sudo mysql -e "CREATE DATABASE IF NOT EXISTS ${P_UID}"
-  sudo mysql -e "CREATE USER IF NOT EXISTS '${P_UID}'@'localhost' IDENTIFIED BY ''"
+  sudo mysql -e "CREATE USER IF NOT EXISTS '${P_UID}'@'localhost' IDENTIFIED BY '${P_PWD}'"
   sudo mysql -e "GRANT ALL PRIVILEGES ON ${P_UID}.* TO '${P_UID}'@'localhost'"
 fi
 
