@@ -42,8 +42,8 @@ if [[ "${P_UID}" != "postgres" ]]; then
   sudo su - postgres -c "psql -c \"GRANT ALL PRIVILEGES ON DATABASE ${P_UID} TO ${P_UID}\""
 
   # allow password auth for local access
-  echo "local    ${P_UID}             ${P_UID}             127.0.0.1/32            ${P_MTD}" | sudo tee -a $HBA_PTH
-  echo "local    ${P_UID}             ${P_UID}             ::1/128            ${P_MTD}" | sudo tee -a $HBA_PTH
+  echo "local    all             ${P_UID}             127.0.0.1/32            ${P_MTD}" | sudo tee -a $HBA_PTH
+  echo "local    all             ${P_UID}             ::1/128            ${P_MTD}" | sudo tee -a $HBA_PTH
 
   # reload the altered pg_hba.conf
   sudo su - postgres -c "psql -c \"SELECT pg_reload_conf()\""
@@ -52,4 +52,4 @@ fi
 # print the contents of pg_hba.conf
 sudo cat $HBA_PTH
 
-echo "Installed PostgreSQL $PGSQL_VER (accessible via sueruser: ${P_UID} using auth-method ${P_MTD} on database: ${P_UID})"
+echo "Installed PostgreSQL $PGSQL_VER (accessible via sueruser: ${P_UID}, auth-method: ${P_MTD}, database: ${P_UID})"
