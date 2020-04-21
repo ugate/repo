@@ -55,7 +55,7 @@ A simple inline script can be used to download and execute the ODBC installation
 
 ```sh
 # set the environmental variable that determines the _tagged_ release version of the installation scripts
-export REPO_VER=v1.2.0
+export REPO_VER=v1.3.0
 
 # ensure unixODBC is installed
 sudo apt-get install unixodbc unixodbc-dev

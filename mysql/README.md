@@ -23,7 +23,7 @@ A simple inline script can be used to download and execute the installation scri
 
 ```sh
 # set the environmental variable that determines the _tagged_ release version of the installation scripts
-export REPO_VER=v1.2.0
+export REPO_VER=v1.3.0
 export MYSQL_MAJOR=<MYSQL_MAJOR_VER_HERE>
 export MYSQL_MINOR=<MYSQL_MINOR_VER_HERE>
 export MYSQL_PATCH=<MYSQL_PATCH_VER_HERE>
