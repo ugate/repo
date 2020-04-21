@@ -14,10 +14,10 @@ sudo apt-get remove --purge mysql-server mysql-client mysql-common -y
 sudo apt-get autoremove -y
 sudo apt-get autoclean
 
-echo "Installing MySQL $MYSQL_VER"
-
 MYSQL_VER="$MYSQL_MAJOR.$MYSQL_MINOR-$MYSQL_PATCH"
 MYSQL_NAME="mysql-apt-config_0.${MYSQL_VER}_all.deb"
+
+echo "Installing MySQL $MYSQL_VER"
 
 wget https://repo.mysql.com/$MYSQL_NAME
 sudo dpkg -i $MYSQL_NAME

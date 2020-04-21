@@ -13,9 +13,9 @@ echo "Uninstalling previous versions of PostgreSQL..."
 # uninstall any existing postgresql versions
 sudo apt-get --purge remove postgresql\*
 
-echo "Installing PostgreSQL $PGSQL_VER"
-
 PGSQL_VER="$POSTGRESQL_MAJOR"
+
+echo "Installing PostgreSQL $PGSQL_VER"
 
 # install postgresql
 sudo apt-get install postgresql-$POSTGRESQL_MAJOR
