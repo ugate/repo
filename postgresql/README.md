@@ -6,16 +6,18 @@ The following actions will be performed when running `install.sh`:
 
 1. Any existing PostgreSQL installations will be removed
 1. A fresh installation of PostgreSQL will be performed using the version set in the env vars
-1. A database will be created using the currently logged in username or the username set in the env vars as the database name (unless the current user is `postgres`, in which case the script will end)
+1. A database will be created using the currently logged in username or the username set in the env vars as the database name (unless `POSTGRESQL_UID=postgres` or `POSTGRESQL_AUTH_METHOD=peer`, in which case the script will end)
 1. The current user will be created as a [SUPERUSER](https://www.postgresql.org/docs/current/app-createuser.html) within PostgreSQL. __The password will be the same as the username.__
 1. The current user will be granted all access to the newly created database that uses the username as the database name
 
 The following environmental variables can be set to control the installation:
 
 1. `POSTGRESQL_MAJOR` (required) - The _major_ version of PostgreSQL that will be installed
-1. `POSTGRESQL_UID` (optional, defaults to the currently logged in username) - The _username_ that will be used when creating the database name and PostgreSQL user
-1. `POSTGRESQL_PWD` (optional, defaults to a blank value) - The _password_ that will be set on the PostgreSQL user
-1. `POSTGRESQL_AUTH_METHOD` (optional, defaults to _md5_) - The [_auth-method_](https://www.postgresql.org/docs/current/auth-pg-hba-conf.html) used for the newly create user (for local access - _peer_ is already added by default by PostgreSQL)
+1. `POSTGRESQL_UID` (optional, defaults to the currently logged in username) - The _username_ that will be used when creating the database name and PostgreSQL user (ignored when __POSTGRESQL_AUTH_METHOD__ is __peer__)
+1. `POSTGRESQL_PWD` (optional, defaults to a blank value) - The _password_ that will be set on the PostgreSQL user (ignored when __POSTGRESQL_AUTH_METHOD__ is __peer__)
+1. `POSTGRESQL_AUTH_METHOD` (optional, defaults to _md5_) - The [_auth-method_](https://www.postgresql.org/docs/current/auth-pg-hba-conf.html) used for the newly created user.
+
+> __NOTE:__ When `POSTGRESQL_UID=postgres` or `POSTGRESQL_AUTH_METHOD=peer`, no database or user is created by the installation script and the [pg_hba.conf](https://www.postgresql.org/docs/current/auth-pg-hba-conf.html) will remain unaltered.
 
 ### Usage
 A simple inline script can be used to download and execute the installation scripts:

@@ -6,7 +6,7 @@ The following actions will be performed when running `install.sh`:
 
 1. Any existing MySQL installations will be removed
 1. A fresh installation of MySQL will be performed using the version set in the env vars
-1. A database will be created using the currently logged in username or the username set in the env vars as the database name (unless the current user is `mysql`, in which case the script will end)
+1. A database will be created using the currently logged in username or the username set in the env vars as the database name (unless `MYSQL_UID=mysql`, in which case the script will end)
 1. The current user will be created with access at `localhost` within MySQL. __The password will be set to blank.__
 1. The current user will be granted all access to the newly created database that uses the username as the database name
 

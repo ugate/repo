@@ -31,7 +31,7 @@ HBA_PTH=`sudo su - postgres -c "psql -t -P format=unaligned -c \"show hba_file\"
 P_UID=`[[ -n "$POSTGRESQL_UID" ]] && echo $POSTGRESQL_UID || echo "$(whoami)"`
 P_PWD=`[[ -n "$POSTGRESQL_PWD" ]] && echo $POSTGRESQL_PWD || echo $P_UID`
 P_MTD=`[[ -n "$POSTGRESQL_AUTH_METHOD" ]] && echo $POSTGRESQL_AUTH_METHOD || echo "md5"`
-if [[ "${P_UID}" != "postgres" ]]; then
+if [[ "${P_UID}" != "postgres" && "${P_MTD}" != "peer" ]]; then
   echo "Creating PostgreSQL user/role $P_UID (grant all on ${P_UID} DB)"
   # using postgres cli, create default DB for user
   sudo su - postgres -c "createdb ${P_UID}"
@@ -42,12 +42,15 @@ if [[ "${P_UID}" != "postgres" ]]; then
   sudo su - postgres -c "psql -c \"GRANT ALL PRIVILEGES ON DATABASE ${P_UID} TO ${P_UID}\""
 
   # allow password auth for local access
-  echo "local    all             ${P_UID}             127.0.0.1/32            ${P_MTD}" | sudo tee -a $HBA_PTH
-  echo "local    all             ${P_UID}             ::1/128            ${P_MTD}" | sudo tee -a $HBA_PTH
+  sed "s/local[[:space:]]*all[[:space:]]*all[[:space:]]*peer/local   all             ${P_UID}             127.0.0.1\/32          ${P_MTD}\nlocal   all             ${P_UID}             ::1\/128               ${P_MTD}/gi" $HBA_PTH
+  #echo "local   all             ${P_UID}             127.0.0.1/32       ${P_MTD}" | sudo tee -a $HBA_PTH
+  #echo "local   all             ${P_UID}             ::1/128            ${P_MTD}" | sudo tee -a $HBA_PTH
 
   # reload the altered pg_hba.conf
   sudo su - postgres -c "psql -c \"SELECT pg_reload_conf()\""
 fi
+
+echo "PostgreSQL auth-emthod set to: ${P_MTD}"
 
 # print the contents of pg_hba.conf
 sudo cat $HBA_PTH
