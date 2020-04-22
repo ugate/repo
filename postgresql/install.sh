@@ -46,6 +46,9 @@ if [[ "${P_UID}" != "postgres" && "${P_MTD}" != "peer" ]]; then
   #echo "local   all             ${P_UID}             127.0.0.1/32       ${P_MTD}" | sudo tee -a $HBA_PTH
   #echo "local   all             ${P_UID}             ::1/128            ${P_MTD}" | sudo tee -a $HBA_PTH
 
+  # remove any other local all peer
+  sudo sed -i "s/(local[[:space:]]*all[[:space:]]*peer)/# \1/gi" $HBA_PTH
+
   # reload the altered pg_hba.conf
   sudo su - postgres -c "psql -c \"SELECT pg_reload_conf()\""
 fi
