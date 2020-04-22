@@ -42,7 +42,7 @@ if [[ "${P_UID}" != "postgres" && "${P_MTD}" != "peer" ]]; then
   sudo su - postgres -c "psql -c \"GRANT ALL PRIVILEGES ON DATABASE ${P_UID} TO ${P_UID}\""
 
   # allow password auth for local access
-  sed "s/local[[:space:]]*all[[:space:]]*all[[:space:]]*peer/local   all             ${P_UID}             127.0.0.1\/32          ${P_MTD}\nlocal   all             ${P_UID}             ::1\/128               ${P_MTD}/gi" $HBA_PTH
+  sudo sed "s/local[[:space:]]*all[[:space:]]*all[[:space:]]*peer/local   all             ${P_UID}             127.0.0.1\/32          ${P_MTD}\nlocal   all             ${P_UID}             ::1\/128               ${P_MTD}/gi" $HBA_PTH
   #echo "local   all             ${P_UID}             127.0.0.1/32       ${P_MTD}" | sudo tee -a $HBA_PTH
   #echo "local   all             ${P_UID}             ::1/128            ${P_MTD}" | sudo tee -a $HBA_PTH
 
