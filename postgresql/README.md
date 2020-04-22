@@ -14,7 +14,7 @@ The following environmental variables can be set to control the installation:
 
 1. `POSTGRESQL_MAJOR` (required) - The _major_ version of PostgreSQL that will be installed
 1. `POSTGRESQL_UID` (optional, defaults to the currently logged in username) - The _username_ that will be used when creating the database name and PostgreSQL user (ignored when __POSTGRESQL_AUTH_METHOD__ is __peer__)
-1. `POSTGRESQL_PWD` (optional, defaults to a blank value) - The _password_ that will be set on the PostgreSQL user (ignored when __POSTGRESQL_AUTH_METHOD__ is __peer__)
+1. `POSTGRESQL_PWD` (optional, defaults to the value in __POSTGRESQL_UID__) - The _password_ that will be set on the PostgreSQL user (ignored when __POSTGRESQL_AUTH_METHOD__ is __peer__)
 1. `POSTGRESQL_AUTH_METHOD` (optional, defaults to _md5_) - The [_auth-method_](https://www.postgresql.org/docs/current/auth-pg-hba-conf.html) used for the newly created user.
 
 > __NOTE:__ When `POSTGRESQL_UID=postgres` or `POSTGRESQL_AUTH_METHOD=peer`, no database or user is created by the installation script and the [pg_hba.conf](https://www.postgresql.org/docs/current/auth-pg-hba-conf.html) will remain unaltered.
