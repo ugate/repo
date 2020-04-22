@@ -52,4 +52,7 @@ fi
 # print the contents of pg_hba.conf
 sudo cat $HBA_PTH
 
+# test connection
+sudo su - postgres -c "psql -d \"postgresql://${P_UID}:${P_PWD}@localhost/${P_UID}\" -c \"SELECT now()\""
+
 echo "Installed PostgreSQL $PGSQL_VER (accessible via sueruser: ${P_UID}, auth-method: ${P_MTD}, database: ${P_UID})"
