@@ -38,7 +38,7 @@ if [[ "${P_UID}" != "postgres" && "${P_MTD}" != "peer" ]]; then
   # permission denied using the following:
   #sudo -u postgres psql -c "CREATE ROLE ${P_UID} WITH LOGIN SUPERUSER"
   #sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE postgres TO ${P_UID}"
-  sudo su - postgres -c "psql -c \"CREATE ROLE ${P_UID} WITH LOGIN SUPERUSER PASSWORD '{$P_PWD}'\""
+  sudo su - postgres -c "psql -c \"CREATE ROLE ${P_UID} WITH LOGIN SUPERUSER PASSWORD '${P_PWD}'\""
   sudo su - postgres -c "psql -c \"GRANT ALL PRIVILEGES ON DATABASE ${P_UID} TO ${P_UID}\""
 
   # allow password auth for local access
@@ -47,7 +47,7 @@ if [[ "${P_UID}" != "postgres" && "${P_MTD}" != "peer" ]]; then
   #echo "local   all             ${P_UID}             ::1/128            ${P_MTD}" | sudo tee -a $HBA_PTH
 
   # remove any other local all peer
-  sudo sed -i "s/\(local[[:space:]]*all.*peer\)/#\1/gi" $HBA_PTH
+  #sudo sed -i "s/\(local[[:space:]]*all.*peer\)/#\1/gi" $HBA_PTH
 
   # reload the altered pg_hba.conf
   sudo su - postgres -c "psql -c \"SELECT pg_reload_conf()\""
