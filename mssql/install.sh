@@ -59,8 +59,6 @@ sudo ln -sfn /opt/mssql-tools/bin/sqlcmd /usr/bin/sqlcmd
 # test connection using ODBC
 sqlcmd -S localhost -U sa -P "${MSSQL_SA_PWD}" -Q "SELECT 1"
 
-# passwords are required to be at least 8 characters, use the pad sequence to append the padding to the password (if needed)
-P_PAD=00000000
 # setup the user permissions to the 
 P_UID=`[[ -n "$MSSQL_UID" ]] && echo $MSSQL_UID || echo "$(whoami)"`
 P_PWD=`[[ -n "$MSSQL_PWD" ]] && echo $MSSQL_PWD || printf "%s%s" $P_UID "_M33QL"`
@@ -70,7 +68,7 @@ if [[ "${P_UID}" != "sa" ]]; then
   echo "Creating MSSQL user $P_UID (grant all on ${P_DDB} DB)"
   sqlcmd -S localhost -U sa -P $MSSQL_SA_PWD -Q "CREATE DATABASE ${P_UID}"
   sqlcmd -S localhost -U sa -P $MSSQL_SA_PWD -Q "CREATE LOGIN ${P_UID} WITH PASSWORD = '${P_PWD}'"
-  sqlcmd -S localhost -U sa -P $MSSQL_SA_PWD -Q "CREATE USER ${P_UID} FOR LOGON ${P_UID} WITH DEFAULT_SCHEMA = ${P_DDB}"
+  sqlcmd -S localhost -U sa -P $MSSQL_SA_PWD -Q "CREATE USER ${P_UID} FOR LOGIN ${P_UID} WITH DEFAULT_SCHEMA = ${P_DDB}"
   sqlcmd -S localhost -U sa -P $MSSQL_SA_PWD -Q "GRANT ALL ON ${P_UID} TO ${P_UID}"
   # test connection
   sqlcmd -S localhost -U "${P_UID}" -P "${P_PWD}" -Q "SELECT 1"
