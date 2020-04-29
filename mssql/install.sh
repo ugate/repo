@@ -24,8 +24,12 @@ echo "Installing MSSQL $MSSQL_VER"
 # import the public repository GPG keys
 wget -qO- https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
 
+echo "Adding MSSQL repository"
+
 # register SQL Server repository
 sudo add-apt-repository "$(wget -qO- https://packages.microsoft.com/config/ubuntu/${MSSQL_UBUNTU_VER}/mssql-server-${MSSQL_VER}.list)"
+
+echo "Installing MSSQL mssql-server"
 
 # install MSSQL
 sudo apt-get update
