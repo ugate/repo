@@ -63,7 +63,7 @@ sqlcmd -S localhost -U sa -P "${MSSQL_SA_PWD}" -Q "SELECT 1"
 P_PAD=00000000
 # setup the user permissions to the 
 P_UID=`[[ -n "$MSSQL_UID" ]] && echo $MSSQL_UID || echo "$(whoami)"`
-P_PWD=`[[ -n "$MSSQL_PWD" ]] && echo $MSSQL_PWD || printf "%s%s" $P_UID "${P_PAD:${P_UID}}"`
+P_PWD=`[[ -n "$MSSQL_PWD" ]] && echo $MSSQL_PWD || printf "%s%s" $P_UID "_M33QL"`
 P_DDB=`[[ -n "$MSSQL_DB" ]] && echo $MSSQL_DB || echo ""`
 if [[ "${P_UID}" != "sa" ]]; then
   P_DDB=`[[ -n "$P_DDB" ]] && echo $P_DDB || echo $P_UID`
