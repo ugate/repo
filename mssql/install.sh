@@ -45,7 +45,7 @@ curl https://packages.microsoft.com/config/ubuntu/${MSSQL_UBUNTU_VER}/prod.list 
 
 # install MSSQL tools (uses unixODBC to connect)
 sudo apt-get update 
-sudo sudo ACCEPT_EULA=Y apt-get install mssql-tools unixodbc-dev
+sudo env ACCEPT_EULA=Y apt-get install mssql-tools unixodbc-dev
 
 # sqlcmd/bcp accessibility
 echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bash_profile
