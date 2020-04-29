@@ -71,9 +71,9 @@ if [[ "${P_UID}" != "sa" ]]; then
   sqlcmd -S localhost -U sa -P $MSSQL_SA_PWD -Q "USE ${P_UID}; CREATE LOGIN ${P_UID} WITH PASSWORD = '${P_PWD}';"
   echo "Creating MSSQL user for login $P_UID on schema ${P_DDB}"
   sqlcmd -S localhost -U sa -P $MSSQL_SA_PWD -Q "USE ${P_UID}; CREATE USER ${P_UID} FOR LOGIN ${P_UID} WITH DEFAULT_SCHEMA = ${P_DDB};"
-  echo "Granting MSSQL user $P_UID all permissions to ${P_DDB}"
-  sqlcmd -S localhost -U sa -P $MSSQL_SA_PWD -Q "USE ${P_UID}; GRANT ALL ON ${P_UID};"
-  # test connection
+  echo "Granting MSSQL user $P_UID all permissions on ${P_DDB}"
+  sqlcmd -S localhost -U sa -P $MSSQL_SA_PWD -Q "USE ${P_UID}; GRANT ALL ${P_UID};"
+  echo "Testing MSSQL connection for user $P_UID"
   sqlcmd -S localhost -U "${P_UID}" -P "${P_PWD}" -Q "SELECT 1"
 else
   P_DDB=master
