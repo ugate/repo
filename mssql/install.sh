@@ -12,6 +12,9 @@ echo "Uninstalling previous versions of MSSQL..."
 
 # uninstall any existing MSSQL installations
 command -v "sudo systemctl stop mssql-server --no-pager" >/dev/null 2>&1 || echo "No MSSQL service running"
+command -v "sudo systemctl disable mssql-server" >/dev/null 2>&1 || echo "No MSSQL service to disable"
+sudo systemctl daemon-reload
+sudo systemctl reset-failed
 command -v "sudo apt-get remove --purge mssql-server mssql-tools -y" >/dev/null 2>&1 || echo "No MSSQL uninstall required"
 sudo apt-get autoremove -y
 sudo apt-get autoclean
@@ -84,3 +87,21 @@ fi
 systemctl status mssql-server --no-pager
 
 echo "Installed MSSQL $MSSQL_VER (accessible via user: ${P_UID}, database: ${P_DDB})"
+
+# ODBC data source setup
+if [[ -n "$MSSQL_ODBC_DATASOURCE" ]]; then
+  echo "Creating MSSQL ODBC data source for: ${MSSQL_ODBC_DATASOURCE}"
+  # validate/capture driver name
+  MSSQL_DRIVER=`odbcinst -q -d`
+  printf "Looking for PostgreSQL driver in: \n${MSSQL_DRIVER}\n"
+  MSSQL_DRIVER=`odbcinst -q -d | sed -nre 's/\[(.*SQL[[:space:]]Server)?)\]/\1/pi'`
+
+  if [[ -z "${MSSQL_DRIVER}" ]]; then
+    echo "[ERROR]: Unable to find SQL Server driver name"
+    exit 1
+  fi
+
+  printf "Installed MSSQL ODBC driver:\n`odbcinst -q -d -n "${MSSQL_DRIVER}"`\n"
+  printf "Installing MSSQL ODBC Data Source for driver [${MSSQL_DRIVER}]\n"
+
+fi
