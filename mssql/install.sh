@@ -40,6 +40,8 @@ sudo MSSQL_PID=Developer ACCEPT_EULA=Y MSSQL_SA_PASSWORD="${MSSQL_SA_PWD}" /opt/
 
 echo "Installing MSSQL Tools"
 
+sudo dpkg --configure -a
+
 # register microsoft repository
 curl https://packages.microsoft.com/config/ubuntu/${MSSQL_UBUNTU_VER}/prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
 
