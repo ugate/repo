@@ -53,6 +53,9 @@ echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bash_profile
 echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bashrc
 source ~/.bashrc
 
+sudo ls /opt/mssql-tools/bin/sqlcmd*
+sudo ln -sfn /opt/mssql-tools/bin/sqlcmd /usr/bin/sqlcmd
+
 # test connection using ODBC
 sqlcmd -S localhost -U sa -P "${MSSQL_SA_PWD}" -Q "SELECT 1"
 
