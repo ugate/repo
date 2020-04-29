@@ -65,10 +65,13 @@ P_PWD=`[[ -n "$MSSQL_PWD" ]] && echo $MSSQL_PWD || printf "%s%s" $P_UID "_M33QL"
 P_DDB=`[[ -n "$MSSQL_DB" ]] && echo $MSSQL_DB || echo ""`
 if [[ "${P_UID}" != "sa" ]]; then
   P_DDB=`[[ -n "$P_DDB" ]] && echo $P_DDB || echo $P_UID`
-  echo "Creating MSSQL user $P_UID (grant all on ${P_DDB} DB)"
+  echo "Creating MSSQL database: ${P_DDB}"
   sqlcmd -S localhost -U sa -P $MSSQL_SA_PWD -Q "CREATE DATABASE ${P_UID}"
+  echo "Creating MSSQL login $P_UID with password authentication"
   sqlcmd -S localhost -U sa -P $MSSQL_SA_PWD -Q "CREATE LOGIN ${P_UID} WITH PASSWORD = '${P_PWD}'"
+  echo "Creating MSSQL user for login $P_UID on schema ${P_DDB}"
   sqlcmd -S localhost -U sa -P $MSSQL_SA_PWD -Q "CREATE USER ${P_UID} FOR LOGIN ${P_UID} WITH DEFAULT_SCHEMA = ${P_DDB}"
+  echo "Granting MSSQL user $P_UID all permissions to ${P_DDB}"
   sqlcmd -S localhost -U sa -P $MSSQL_SA_PWD -Q "GRANT ALL ON ${P_UID} TO ${P_UID}"
   # test connection
   sqlcmd -S localhost -U "${P_UID}" -P "${P_PWD}" -Q "SELECT 1"
