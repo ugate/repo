@@ -73,13 +73,18 @@ if [[ "${P_UID}" != "sa" ]]; then
     echo "Creating MSSQL database: ${P_DBN}"
     sqlcmd -S localhost -U sa -P $MSSQL_SA_PWD -Q "CREATE DATABASE ${P_DBN}"
   fi
-  echo "Creating MSSQL login $P_UID with password authentication"
-  sqlcmd -S localhost -U sa -P $MSSQL_SA_PWD -Q "USE ${P_DBN}; CREATE LOGIN ${P_UID} WITH PASSWORD = '${P_PWD}';"
-  echo "Creating MSSQL user for login $P_UID on schema dbo"
-  sqlcmd -S localhost -U sa -P $MSSQL_SA_PWD -Q "USE ${P_DBN}; CREATE USER ${P_UID} FOR LOGIN ${P_UID} WITH DEFAULT_SCHEMA = dbo;"
-  echo "Granting MSSQL user $P_UID all permissions on ${P_DBN}"
-  sqlcmd -S localhost -U sa -P $MSSQL_SA_PWD -Q "USE ${P_DBN}; GRANT ALL TO ${P_UID};"
-  echo "Testing MSSQL connection for user $P_UID"
+  echo "Creating MSSQL login ${P_UID} with password authentication and default database ${P_DBN}"
+  sqlcmd -S localhost -U sa -P $MSSQL_SA_PWD -Q "CREATE LOGIN ${P_UID} WITH PASSWORD = '${P_PWD}', DEFAULT_DATABASE = ${P_DBN}"
+  echo "Creating MSSQL user ${P_UID} for login ${P_UID} on schema dbo"
+  sqlcmd -S localhost -U sa -P $MSSQL_SA_PWD -Q "CREATE USER ${P_UID} FOR LOGIN ${P_UID} WITH DEFAULT_SCHEMA = dbo"
+  if [[ "$P_DBN" != "master" ]]; then
+    echo "Granting ownsership on ${P_DBN} for MSSQL user ${P_UID}"
+    sqlcmd -S localhost -U sa -P $MSSQL_SA_PWD -Q "ALTER AUTHORIZATION ON DATABASE::${P_DBN} TO ${P_UID}"
+  else
+    echo "Granting MSSQL user ${P_UID} all permissions on ${P_DBN}"
+    sqlcmd -S localhost -U sa -P $MSSQL_SA_PWD -Q "USE ${P_DBN}; GRANT ALL TO ${P_UID};"
+  fi
+  echo "Testing MSSQL connection for user ${P_UID}"
   sqlcmd -S localhost -U "${P_UID}" -P "${P_PWD}" -Q "SELECT 1"
 else
   P_DBN=master
