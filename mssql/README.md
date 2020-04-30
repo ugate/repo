@@ -34,4 +34,15 @@ rm -rf install-mssql.sh
 ```
 
 ## ODBC
-ODBC drivers are automatically installed when MSSQL is installed. 
+ODBC drivers are automatically installed when MSSQL is installed. In order to add a data source using the `install.sh` script, simply set the following environmental variables prior to execution:
+
+1. `MSSQL_ODBC_DATASOURCE` (required when setting an ODBC data source) - The name to use for the MSSQL ODBC data source
+
+The data source will be to appened to `odbc.ini` using the following values:
+
+1. `Driver` - Extracted from the installed MSSQL ODBC driver
+1. `Description` - _MSSQL Connector/ODBC_
+1. `Server` - _127.0.0.1_
+1. `Database` - The value from __MSSQL_DB__
+1. `UID` - The value from __MSSQL_UID__
+1. `PWD` - The value from __MSSQL_PWD__
