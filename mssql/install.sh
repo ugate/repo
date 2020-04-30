@@ -66,27 +66,27 @@ sqlcmd -S localhost -U sa -P "${MSSQL_SA_PWD}" -Q "SELECT 1"
 # setup the user permissions to the 
 P_UID=`[[ -n "$MSSQL_UID" ]] && echo $MSSQL_UID || echo "$(whoami)"`
 P_PWD=`[[ -n "$MSSQL_PWD" ]] && echo $MSSQL_PWD || printf "%s%s" $P_UID "_M33QL"`
-P_DDB=`[[ -n "$MSSQL_DB" ]] && echo $MSSQL_DB || echo ""`
+P_DBN=`[[ -n "$MSSQL_DB" ]] && echo $MSSQL_DB || echo ""`
 if [[ "${P_UID}" != "sa" ]]; then
-  P_DDB=`[[ -n "$P_DDB" ]] && echo $P_DDB || echo $P_UID`
-  echo "Creating MSSQL database: ${P_DDB}"
-  sqlcmd -S localhost -U sa -P $MSSQL_SA_PWD -Q "CREATE DATABASE ${P_DDB}"
+  P_DBN=`[[ -n "$P_DBN" ]] && echo $P_DBN || echo $P_UID`
+  echo "Creating MSSQL database: ${P_DBN}"
+  sqlcmd -S localhost -U sa -P $MSSQL_SA_PWD -Q "CREATE DATABASE ${P_DBN}"
   echo "Creating MSSQL login $P_UID with password authentication"
-  sqlcmd -S localhost -U sa -P $MSSQL_SA_PWD -Q "USE ${P_DDB}; CREATE LOGIN ${P_UID} WITH PASSWORD = '${P_PWD}';"
+  sqlcmd -S localhost -U sa -P $MSSQL_SA_PWD -Q "USE ${P_DBN}; CREATE LOGIN ${P_UID} WITH PASSWORD = '${P_PWD}';"
   echo "Creating MSSQL user for login $P_UID on schema dbo"
-  sqlcmd -S localhost -U sa -P $MSSQL_SA_PWD -Q "USE ${P_DDB}; CREATE USER ${P_UID} FOR LOGIN ${P_UID} WITH DEFAULT_SCHEMA = dbo;"
-  echo "Granting MSSQL user $P_UID all permissions on ${P_DDB}"
-  sqlcmd -S localhost -U sa -P $MSSQL_SA_PWD -Q "USE ${P_DDB}; GRANT ALL TO ${P_UID};"
+  sqlcmd -S localhost -U sa -P $MSSQL_SA_PWD -Q "USE ${P_DBN}; CREATE USER ${P_UID} FOR LOGIN ${P_UID} WITH DEFAULT_SCHEMA = dbo;"
+  echo "Granting MSSQL user $P_UID all permissions on ${P_DBN}"
+  sqlcmd -S localhost -U sa -P $MSSQL_SA_PWD -Q "USE ${P_DBN}; GRANT ALL TO ${P_UID};"
   echo "Testing MSSQL connection for user $P_UID"
   sqlcmd -S localhost -U "${P_UID}" -P "${P_PWD}" -Q "SELECT 1"
 else
-  P_DDB=master
+  P_DBN=master
 fi
 
 # check the status
 systemctl status mssql-server --no-pager
 
-echo "Installed MSSQL $MSSQL_VER (accessible via user: ${P_UID}, database: ${P_DDB})"
+echo "Installed MSSQL $MSSQL_VER (accessible via user: ${P_UID}, database: ${P_DBN})"
 
 # ODBC data source setup
 if [[ -n "$MSSQL_ODBC_DATASOURCE" ]]; then
@@ -103,5 +103,23 @@ if [[ -n "$MSSQL_ODBC_DATASOURCE" ]]; then
 
   printf "Installed MSSQL ODBC driver:\n`odbcinst -q -d -n "${MSSQL_DRIVER}"`\n"
   printf "Installing MSSQL ODBC Data Source for driver [${MSSQL_DRIVER}]\n"
+
+  printf "\n[${MSSQL_ODBC_DATASOURCE}]\n" > mssql-ds.txt
+  printf "Driver=${MSSQL_DRIVER}\n" >> mssql-ds.txt
+  printf "Description=MSSQL Connector/ODBC\n" >> mssql-ds.txt
+  printf "Server=127.0.0.1\n" >> mssql-ds.txt
+  printf "Database=${P_DBN}\n" >> mssql-ds.txt
+  printf "UID=${P_UID}\n" >> mssql-ds.txt
+  printf "PWD=${P_PWD}\n" >> mssql-ds.txt
+
+  # install data source
+  #sudo odbcinst -i -s -l -f mssql-ds.txt
+  cat mssql-ds.txt | sudo tee -a /etc/odbc.ini
+  rm -f mssql-ds.txt
+
+  printf "Installed MSSQL ODBC Data Source ${MSSQL_ODBC_DATASOURCE} for driver [${MSSQL_DRIVER}]:\n`odbcinst -q -s -n "${MSSQL_ODBC_DATASOURCE}"`\n"
+
+  # test ODBC connection
+  printf "quit\r" | isql -v "${MSSQL_ODBC_DATASOURCE}" "${P_UID}" "${P_PWD}"
 
 fi
