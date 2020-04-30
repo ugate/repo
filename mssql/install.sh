@@ -69,8 +69,10 @@ P_PWD=`[[ -n "$MSSQL_PWD" ]] && echo $MSSQL_PWD || printf "%s%s" $P_UID "_M33QL"
 P_DBN=`[[ -n "$MSSQL_DB" ]] && echo $MSSQL_DB || echo ""`
 if [[ "${P_UID}" != "sa" ]]; then
   P_DBN=`[[ -n "$P_DBN" ]] && echo $P_DBN || echo $P_UID`
-  echo "Creating MSSQL database: ${P_DBN}"
-  sqlcmd -S localhost -U sa -P $MSSQL_SA_PWD -Q "CREATE DATABASE ${P_DBN}"
+  if [[ "$P_DBN" != "dbo" ]]; then
+    echo "Creating MSSQL database: ${P_DBN}"
+    sqlcmd -S localhost -U sa -P $MSSQL_SA_PWD -Q "CREATE DATABASE ${P_DBN}"
+  fi
   echo "Creating MSSQL login $P_UID with password authentication"
   sqlcmd -S localhost -U sa -P $MSSQL_SA_PWD -Q "USE ${P_DBN}; CREATE LOGIN ${P_UID} WITH PASSWORD = '${P_PWD}';"
   echo "Creating MSSQL user for login $P_UID on schema dbo"
