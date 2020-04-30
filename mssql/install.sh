@@ -42,14 +42,14 @@ sudo apt-get install -y mssql-server
 # configure developer edition of MSSQL, accept EULA license agreement and set the "sa" user password
 sudo MSSQL_PID=Developer ACCEPT_EULA=Y MSSQL_SA_PASSWORD="${MSSQL_SA_PWD}" /opt/mssql/bin/mssql-conf -n setup
 
-echo "Installing MSSQL Tools"
+echo "Installing MSSQL Tools (required package \"unixodbc\" and \"unixodbc-dev\" should already be installed)"
 
 # register microsoft repository
 curl https://packages.microsoft.com/config/ubuntu/${MSSQL_UBUNTU_VER}/prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
 
 # install MSSQL tools (uses unixODBC to connect)
 sudo apt-get update 
-sudo env ACCEPT_EULA=Y apt-get install mssql-tools unixodbc-dev
+sudo env ACCEPT_EULA=Y apt-get install mssql-tools
 
 # sqlcmd/bcp accessibility
 echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bash_profile

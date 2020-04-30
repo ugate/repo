@@ -2,6 +2,13 @@
 The scripts provided in this directory can be used to install [MSSQL](https://www.microsoft.com/en-us/sql-server) using `bash`.
 
 ## [`install.sh`](install.sh)
+The following should be executed prior to running `install.sh`:
+
+```sh
+# required for mssql-tools (uses ODBC)
+sudo apt-get install unixodbc unixodbc-dev
+```
+
 The following actions will be performed when running `install.sh`:
 
 1. Any existing MSSQL installations will be removed
