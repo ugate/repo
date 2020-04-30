@@ -93,7 +93,7 @@ if [[ -n "$MSSQL_ODBC_DATASOURCE" ]]; then
   echo "Creating MSSQL ODBC data source for: ${MSSQL_ODBC_DATASOURCE}"
   # validate/capture driver name
   MSSQL_DRIVER=`odbcinst -q -d`
-  printf "Looking for PostgreSQL driver in: \n${MSSQL_DRIVER}\n"
+  printf "Looking for MSSQL driver in: \n${MSSQL_DRIVER}\n"
   MSSQL_DRIVER=`odbcinst -q -d | sed -nre 's/\[(.*(SQL[[:space:]]Server)?)\]/\1/pi'`
 
   if [[ -z "${MSSQL_DRIVER}" ]]; then
