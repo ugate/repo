@@ -1,5 +1,5 @@
 # MSSQL Installation
-The scripts provided in this directory can be used to install [MSSQL]((https://www.microsoft.com/en-us/sql-server) using `bash`.
+The scripts provided in this directory can be used to install [MSSQL](https://www.microsoft.com/en-us/sql-server) using `bash`.
 
 ## [`install.sh`](install.sh)
 The following actions will be performed when running `install.sh`:
