@@ -69,7 +69,7 @@ P_PWD=`[[ -n "$MSSQL_PWD" ]] && echo $MSSQL_PWD || printf "%s%s" $P_UID "_M33QL"
 P_DBN=`[[ -n "$MSSQL_DB" ]] && echo $MSSQL_DB || echo ""`
 if [[ "${P_UID}" != "sa" ]]; then
   P_DBN=`[[ -n "$P_DBN" ]] && echo $P_DBN || echo $P_UID`
-  if [[ "$P_DBN" != "dbo" ]]; then
+  if [[ "$P_DBN" != "master" ]]; then
     echo "Creating MSSQL database: ${P_DBN}"
     sqlcmd -S localhost -U sa -P $MSSQL_SA_PWD -Q "CREATE DATABASE ${P_DBN}"
   fi
