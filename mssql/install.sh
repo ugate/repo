@@ -97,7 +97,7 @@ if [[ -n "$MSSQL_ODBC_DATASOURCE" ]]; then
   MSSQL_DRIVER=`odbcinst -q -d | sed -nre 's/\[(.*(SQL[[:space:]]Server)?)\]/\1/pi'`
 
   if [[ -z "${MSSQL_DRIVER}" ]]; then
-    echo "[ERROR]: Unable to find SQL Server driver name"
+    echo "[ERROR]: Unable to find MSSQL driver name"
     exit 1
   fi
 
