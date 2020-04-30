@@ -13,6 +13,7 @@ The following actions will be performed when running `install.sh`:
 The following environmental variables can be set to control the installation:
 
 1. `MSSQL_VER` (required) - The version of MSSQL that will be installed (e.g. _2019_)
+1. `MSSQL_SA_PWD` (required) - The password for the MSSQL administrative account (i.e. __sa__)
 1. `MSSQL_UID` (optional, defaults to the currently logged in username) - The _username_ that will be used when creating the database name and MSSQL user
 1. `MSSQL_PWD` (optional, defaults to a blank value) - The _password_ that will be set on the MSSQL user
 1. `MSSQL_DB` (required, defaults to the value from __MSSQL_UID__) - The name of the _database_ to create that the __MSSQL_UID__ will be granted all access to
