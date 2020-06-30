@@ -11,28 +11,42 @@
 # (optional) and tests the app (optional).
 ##################################################################################
 # $1 Execution type (either BUILD, DEPLOY or DEPLOY_CLEAN)
-# $2 Node.js app name (required)
-# $3 Node.js app dir (defaults to "")
-# $4 nvmrc.sh directory (defaults to "/opt")
-# $5 npm/node ci/install command (defaults to "npm ci")
-# $6 npm/node test command (defaults to "npm test", optional)
-# $7 npm/node bundle/debundle command (defaults to "", optional)
-# $8 node app starting port for service (increments int to number of physical cores, DEPLOY only)
-# $9 node environment that will be used to set NODE_ENV (defaults to "test", DEPLOY only)
-# $10 Temporary directory for deployment backup and other temp files (defaults to "/tmp", DEPLOY only)
-# NOTE: during BUILD the generated artifact resides at $3/artifacts/$2.gz.tar
-# NOTE: during DEPLOY the generated BUILD artifact is expected to reside at $10/$2/$2.gz.tar
+# $2 The NODE_ENV value that will be set when the app is ran
+# $3 Path to the execution properties file (see docs for available property names)
 
 EXEC_TYPE=`[[ ("$1" == "BUILD" || "$1" == "DEPLOY" || "$1" == "DEPLOY_CLEAN") ]] && echo $1 || echo ""`
-APP_NAME=`[[ (-n "$2") ]] && echo $2`
-APP_DIR=`[[ (-n "$3") ]] && echo $3 || echo ""`
-NVMRC_DIR=`[[ (-n "$4") ]] && echo $4 || echo "/opt"`
-CMD_INSTALL=`[[ (-n "$5") ]] && echo $5 || echo "npm ci"`
-CMD_TEST=`[[ (-n "$6") ]] && echo $6 || echo "npm test"`
-CMD_BUNDLE=`[[ (-n "$7") ]] && echo $7 || echo ""`
-APP_PORT=`[[ "$8" =~ ^[0-9]+$ ]] && echo $8 || echo ""`
-NODE_ENV=`[[ (-n "$9") ]] && echo $9 || echo "test"`
-APP_TMP=`[[ (-n "${10}") ]] && echo ${10} || echo /tmp`
+NODE_ENV=`[[ (-n "$2") ]] && echo $2 || echo ""`
+CONF_PATH=`[[ (-f "$3") ]] && echo $3 || echo ""`
+
+if [[ (-z "$CONF_PATH") ]]; then
+  echo "Missing or invalid properties file path at argument \$2" >&2
+  exit 1
+fi
+
+confProp() {
+  grep "${1}" ${CONF_PATH}|cut -d'=' -f2
+}
+
+APP_NAME=$(confProp 'app.name')
+APP_DESC=$(confProp 'app.description')
+APP_DIR=$(confProp 'app.directory')
+APP_DIR=`[[ (-n "$APP_DIR") ]] && echo $APP_DIR || echo "."`
+CMD_INSTALL=$(confProp "app.command.$EXEC_TYPE.install")
+CMD_INSTALL=`[[ (-n "$CMD_INSTALL") ]] && echo $CMD_INSTALL || echo "npm ci"`
+CMD_TEST=$(confProp "app.command.$EXEC_TYPE.test")
+CMD_TEST=`[[ (-n "$CMD_TEST") ]] && echo $CMD_TEST || echo "npm test"`
+CMD_BUNDLE=$(confProp "app.command.$EXEC_TYPE.bundle")
+CMD_BUNDLE=`[[ (-n "$CMD_BUNDLE") ]] && echo $CMD_BUNDLE || echo ""`
+CMD_DEBUNDLE=$(confProp "app.command.$EXEC_TYPE.debundle")
+CMD_DEBUNDLE=`[[ (-n "$CMD_DEBUNDLE") ]] && echo $CMD_DEBUNDLE || echo ""`
+APP_PORT=$(confProp 'app.port.number')
+APP_PORT=`[[ "$APP_PORT" =~ ^[0-9]+$ ]] && echo $APP_PORT || echo ""`
+APP_PORT_COUNT=$(confProp 'app.port.count')
+APP_PORT_COUNT=`[[ "$APP_PORT_COUNT" =~ ^[0-9]+$ ]] && echo $APP_PORT_COUNT || echo ""`
+NVMRC_DIR=$(confProp 'nvmrc.script.directory')
+NVMRC_DIR=`[[ (-n "$NVMRC_DIR") ]] && echo $NVMRC_DIR || echo "/opt"`
+APP_TMP=$(confProp 'nvmrc.script.directory')
+APP_TMP=`[[ (-n "$APP_TMP") ]] && echo $APP_TMP || echo /tmp`
 
 DEPLOY=`[[ "$EXEC_TYPE" =~ ^DEPLOY ]] && echo "DEPLOY" || echo ""`
 CLEAN=`[[ "$EXEC_TYPE" =~ CLEAN$ ]] && echo "CLEAN" || echo ""`
@@ -40,7 +54,7 @@ SERVICE_BASE="/etc/systemd/system"
 SERVICE_PATH="$SERVICE_BASE/$APP_NAME@.service"
 TARGET_PATH="$SERVICE_BASE/$APP_NAME.target"
 
-execCmdCICD () {
+execCmdCICD() {
   if [[ (-n "$1") ]]; then
     echo "$EXEC_TYPE: \"$1\""
     $1
@@ -66,7 +80,8 @@ setServices() {
 
 if [[ (-n "$EXEC_TYPE") ]]; then
   echo "$EXEC_TYPE: starting using parameters \$EXEC_TYPE=\"$EXEC_TYPE\" \$APP_NAME=\"$APP_NAME\" \$APP_DIR=\"$APP_DIR\" \$NVMRC_DIR=\"$NVMRC_DIR\" \
-  \$CMD_INSTALL=\"$CMD_INSTALL\" \$CMD_TEST=\"$CMD_TEST\" \$CMD_BUNDLE=\"$CMD_BUNDLE\" \$APP_PORT=\"$APP_PORT\" \$NODE_ENV=\"$NODE_ENV\" \$APP_TMP=\"$APP_TMP\""
+  \$CMD_INSTALL=\"$CMD_INSTALL\" \$CMD_TEST=\"$CMD_TEST\" \$CMD_BUNDLE=\"$CMD_BUNDLE\" \$CMD_DEBUNDLE=\"$CMD_DEBUNDLE\" \$APP_PORT=\"$APP_PORT\" \
+  \$APP_PORT_COUNT=\"$APP_PORT_COUNT\" \$NODE_ENV=\"$NODE_ENV\" \$APP_TMP=\"$APP_TMP\""
 else
   echo "Missing or invalid execution type (first argument, either \"BUILD\", \"DEPLOY\" or \"DEPLOY_CLEAN\"" >&2
   exit 1
@@ -126,14 +141,19 @@ if [[ -n "$DEPLOY" ]]; then
     fi
     if [[ -z "$TARGETED" || -n "$CLEAN" ]]; then
       echo "$EXEC_TYPE: performing setup for systemctl on $APP_NAME.target"
-      # match the number of processes/services with the number of physical cores
-      CORE_CNT=`getconf _NPROCESSORS_ONLN`
-      [[ $? != 0 ]] && { echo "$EXEC_TYPE: failed deterine the number of physical CPU cores" >&2; exit 1; }
-      echo "$EXEC_TYPE: matching app services to $CORE_CNT physical CPU cores starting at port $APP_PORT"
-      for (( c=$APP_PORT; c<$CORE_CNT + $APP_PORT; c++ )); do
+      if [[ -n "$APP_PORT_COUNT" ]]; then
+        echo "$EXEC_TYPE: app services count explicitly set to \$APP_PORT_COUNT=$APP_PORT_COUNT starting at port $APP_PORT"
+      else
+        # match the number of processes/services with the number of physical cores
+        CORE_CNT=`getconf _NPROCESSORS_ONLN`
+        [[ $? != 0 ]] && { echo "$EXEC_TYPE: failed deterine the number of physical CPU cores" >&2; exit 1; }
+        APP_PORT_COUNT=$CORE_CNT
+        echo "$EXEC_TYPE: matching app services to $APP_PORT_COUNT physical CPU cores starting at port $APP_PORT"
+      fi
+      for (( c=$APP_PORT; c<$APP_PORT_COUNT + $APP_PORT; c++ )); do
         PORT_USED=`sudo ss -tulwnH "( sport = :$c )"`
         if [[ -n "$PORT_USED" ]]; then
-          echo "$EXEC_TYPE: app port $c is already in use (core count: $CORE_CNT, start port: $APP_PORT)" >&2
+          echo "$EXEC_TYPE: app port $c is already in use (core count: $APP_PORT_COUNT, start port: $APP_PORT)" >&2
           exit 1
         fi
         echo "$EXEC_TYPE: building systemctl node app service on port $c"
@@ -187,7 +207,7 @@ fi
 SERVICE=`[[ -z "$SERVICES" ]] && echo "" || echo "
 # $SERVICE_PATH
 [Unit]
-Description=\"$APP_NAME (%H:%i)\"
+Description=\"$APP_DESC (%H:%i)\"
 After=network.target
 # Wants=redis.service
 PartOf=$APP_NAME.target
@@ -265,7 +285,7 @@ if [[ ("$EXEC_TYPE" == "BUILD") ]]; then
   [[ $? != 0 ]] && { echo "$EXEC_TYPE: failed to create app archive $PWD/artifacts/$APP_NAME.tar.gz" >&2; exit 1; }
 else
   # execute debundle
-  execCmdCICD "$CMD_BUNDLE" "debundling"
+  execCmdCICD "$CMD_DEBUNDLE" "debundling"
   [[ $? != 0 ]] && exit 1
   # execute install
   execCmdCICD "$CMD_INSTALL" "ci/install"
