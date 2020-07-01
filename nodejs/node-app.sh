@@ -12,19 +12,17 @@
 ##################################################################################
 # $1 Execution type (either BUILD, DEPLOY or DEPLOY_CLEAN)
 # $2 The NODE_ENV value that will be set when the app is ran
-# $3 Path to the execution properties file (see docs for available property names)
+# $3 Path to the execution properties file (default: "./node-app.properties", see docs for available property names)
 
 EXEC_TYPE=`[[ ("$1" == "BUILD" || "$1" == "DEPLOY" || "$1" == "DEPLOY_CLEAN") ]] && echo $1 || echo ""`
 NODE_ENV=`[[ (-n "$2") ]] && echo $2 || echo ""`
-CONF_PATH=`[[ (-f "$3") ]] && echo $3 || echo ""`
+CONF_PATH=`[[ (-f "$3") ]] && echo $3 || echo "./node-app.properties"`
 
-if [[ (-z "$CONF_PATH") ]]; then
-  echo "Missing or invalid properties file path at argument \$2" >&2
-  exit 1
-fi
+# SCRIPT_FILE=$(readlink -f "$0") or SCRIPT_FILE=$(readlink "$BASH_SOURCE" || echo "$BASH_SOURCE")
+SCRIPT_DIR=`dirname $0`
 
 confProp() {
-  grep "${1}" ${CONF_PATH}|cut -d'=' -f2
+  sed -rn "s/^${1}=([^\n]+)$/\1/p" ${CONF_PATH}
 }
 
 APP_NAME=$(confProp 'app.name')
@@ -44,7 +42,7 @@ APP_PORT=`[[ "$APP_PORT" =~ ^[0-9]+$ ]] && echo $APP_PORT || echo ""`
 APP_PORT_COUNT=$(confProp 'app.port.count')
 APP_PORT_COUNT=`[[ "$APP_PORT_COUNT" =~ ^[0-9]+$ ]] && echo $APP_PORT_COUNT || echo ""`
 NVMRC_DIR=$(confProp 'nvmrc.script.directory')
-NVMRC_DIR=`[[ (-n "$NVMRC_DIR") ]] && echo $NVMRC_DIR || echo "/opt"`
+NVMRC_DIR=`[[ (-n "$NVMRC_DIR") ]] && echo $NVMRC_DIR || echo $SCRIPT_DIR`
 APP_TMP=$(confProp 'nvmrc.script.directory')
 APP_TMP=`[[ (-n "$APP_TMP") ]] && echo $APP_TMP || echo /tmp`
 
@@ -79,9 +77,10 @@ setServices() {
 }
 
 if [[ (-n "$EXEC_TYPE") ]]; then
-  echo "$EXEC_TYPE: starting using parameters \$EXEC_TYPE=\"$EXEC_TYPE\" \$APP_NAME=\"$APP_NAME\" \$APP_DIR=\"$APP_DIR\" \$NVMRC_DIR=\"$NVMRC_DIR\" \
-  \$CMD_INSTALL=\"$CMD_INSTALL\" \$CMD_TEST=\"$CMD_TEST\" \$CMD_BUNDLE=\"$CMD_BUNDLE\" \$CMD_DEBUNDLE=\"$CMD_DEBUNDLE\" \$APP_PORT=\"$APP_PORT\" \
-  \$APP_PORT_COUNT=\"$APP_PORT_COUNT\" \$NODE_ENV=\"$NODE_ENV\" \$APP_TMP=\"$APP_TMP\""
+  echo "$EXEC_TYPE: starting using parameters \$EXEC_TYPE=\"$EXEC_TYPE\" \$NODE_ENV=\"$NODE_ENV\" \$CONF_PATH=\"$CONF_PATH\" \
+  \$APP_NAME=\"$APP_NAME\" \$APP_DIR=\"$APP_DIR\" \$NVMRC_DIR=\"$NVMRC_DIR\" \$CMD_INSTALL=\"$CMD_INSTALL\" \
+  \$CMD_TEST=\"$CMD_TEST\" \$CMD_BUNDLE=\"$CMD_BUNDLE\" \$CMD_DEBUNDLE=\"$CMD_DEBUNDLE\" \$APP_PORT=\"$APP_PORT\" \
+  \$APP_PORT_COUNT=\"$APP_PORT_COUNT\" \$APP_TMP=\"$APP_TMP\""
 else
   echo "Missing or invalid execution type (first argument, either \"BUILD\", \"DEPLOY\" or \"DEPLOY_CLEAN\"" >&2
   exit 1
@@ -187,7 +186,7 @@ cd $APP_DIR
 if [[ (-x "$NVMRC_DIR/nvmrc.sh") ]]; then
   echo "$EXEC_TYPE: using nvmrc.sh located at \"$NVMRC_DIR/nvmrc.sh\""
 else
-  echo "$EXEC_TYPE: unable to find: \"$NVMRC_DIR/nvmrc.sh\"" >&2
+  echo "$EXEC_TYPE: unable to find/execute: \"$NVMRC_DIR/nvmrc.sh\"" >&2
   exit 1
 fi
 # source nvmrc.sh so we have access to $NVMRC_VER that is exported by nvmrc.sh

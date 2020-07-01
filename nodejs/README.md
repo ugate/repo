@@ -4,17 +4,17 @@ The scripts provided in this directory can be used to agnostically build, instal
 The script utilizes [nvm (Node Version Management)](https://github.com/nvm-sh/nvm) so each application can define it's own `.nvmrc` file that contains the version of Node.js that should be used to build, deploy and run the app.
 
 ## Build
-The following steps are performed by [`node-app-cicd.sh`](node-app-cicd.sh):
+The following steps are performed by [`node-app.sh`](node-app.sh):
 
 <kbd>![Build Flow](img/build.png)</kbd>
 
 ## Deployment
-The following steps are performed by [`node-app-cicd.sh`](node-app-cicd.sh):
+The following steps are performed by [`node-app.sh`](node-app.sh):
 
 <kbd>![Deploy Flow](img/deploy.png)</kbd>
 
 ## Build/Deploy Script
-The [`node-app-cicd.sh`](node-app-cicd.sh) should be executed using the following paramters:
+The [`node-app.sh`](node-app.sh) should be executed using the following paramters:
 
 - __Execution type__ (either `BUILD`, `DEPLOY` or `DEPLOY_CLEAN`)
 - __NODE_ENV__ (the Node.js environment that the app will run under)
@@ -24,12 +24,12 @@ Examples:
 
 ```sh
 # Build the app using the specified conf file
-node-app-cicd.sh "BUILD" "development" "/path/to/build.properties"
+node-app.sh "BUILD" "development" "/path/to/build.properties"
 # Deploy the app using the specified conf file
-node-app-cicd.sh "DEPLOY" "test" "/path/to/deploy.properties"
+node-app.sh "DEPLOY" "test" "/path/to/deploy.properties"
 # Clean the app and corresponding systemd services
 # and redeploy the app using the specified conf file
-node-app-cicd.sh "DEPLOY_CLEAN" "production" "/path/to/deploy.clean.properties"
+node-app.sh "DEPLOY_CLEAN" "production" "/path/to/deploy.clean.properties"
 ```
 
 The configuration proerties file contains the following defaults:
@@ -63,7 +63,7 @@ app.description=
 # ==============================================
 # The app description for systemd service, etc.
 # ----------------------------------------------
-# >>> REQUIRED
+# >>> DEFAULT: ./
 # ==============================================
 app.directory=
 # ==============================================
@@ -131,9 +131,10 @@ app.command.DEPLOY_CLEAN.debundle=
 # Used to install Node.js based upon the .nvmrc
 # file located in the root of the app directory
 # ----------------------------------------------
-# >>> REQUIRED
+# >>> DEFAULT: the same path of the calling
+# shell script
 # ==============================================
-nvmrc.script.directory=.
+nvmrc.script.directory=
 
 # ==============================================
 # The directory to where temporary files will be
