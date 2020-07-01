@@ -2,7 +2,9 @@
 # Ensure node version in .nvmrc is installed (e.g. lts/iron or v20.0.0)
 # $NVM_DIR should be already set before running (usually auto loaded from profile)
 # $1 Node.js app base directory (defaults to $PWD)
-source ~/.bashrc
+if [[ -f ~/.bashrc ]]; then
+  source ~/.bashrc
+fi
 NVMRC_APP_DIR=`[[ (-n "$1") ]] && echo $1 || echo $PWD`
 echo "Using \$NVM_DIR=$NVM_DIR for $NVMRC_APP_DIR/.nvmrc"
 NVMRC_RC=`cat $NVMRC_APP_DIR/.nvmrc 2>/dev/null | sed 's/lts\///'`
@@ -20,7 +22,7 @@ if [[ (-z "$NVMRC_VER") ]]; then
   NVMRC_LTS_LATEST=`nvm ls-remote --lts | sed -nre "s/^.*(v[0-9]+\.[0-9]+\.[0-9]).*Latest LTS.*$NVMRC_LTS_NAME.*/\1/pi"`
   if [[ (-n "$NVMRC_LTS_LATEST") && ("$NVMRC_LTS_VER" == "$NVMRC_LTS_LATEST") ]]; then
     NVMRC_LTS_INSTALL=1
-    NVMRC_VER=$NVMRC_LTS_LATEST
+    NVMRC_VER="$NVMRC_LTS_LATEST"
   elif [[ (-n "$NVMRC_LTS_LATEST") && (-n "$NVMRC_LTS_VER") && ("$NVMRC_LTS_VER" != "$NVMRC_LTS_LATEST") ]]; then
     echo "Upgrading Node.js to the latest lts/$NVMRC_LTS_NAME: $NVMRC_LTS_VER -> $NVMRC_LTS_LATEST"
     nvm install $NVMRC_LTS_LATEST
