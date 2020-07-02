@@ -1,7 +1,7 @@
 # Node.js Installation
 The scripts provided in this directory can be used to agnostically build, install, test and deploy [Node.js](https://nodejs.org) applications using `bash`.
 
-The script utilizes [nvm (Node Version Management)](https://github.com/nvm-sh/nvm) so each application can define it's own `.nvmrc` file that contains the version of Node.js that should be used to build, deploy and run the app.
+The script utilizes [nvm (Node Version Management)](https://github.com/nvm-sh/nvm) so each application can define it's own `.nvmrc` file that contains the version of Node.js that should be used to build, deploy and run the app. The [`nvmrc.sh`](nvmrc.sh) script is internally called by [`node-app.sh`](node-app.sh) and will ensure that the Node.js version defined within the `.nvmrc` file is installed and used during builds and deployments as well as the version used for the running app. The `.nvmrc` file can also contain a [Node.js codename](https://github.com/nodejs/Release/blob/master/CODENAMES.md). In which case, the latest derived Node.js version for the defined codename will be installed and used during builds and deployments as well as the version used for the running app.
 
 ## Build
 The following steps are performed by [`node-app.sh`](node-app.sh):
@@ -18,7 +18,7 @@ The [`node-app.sh`](node-app.sh) should be executed using the following paramter
 
 - __Execution type__ (either `BUILD`, `DEPLOY` or `DEPLOY_CLEAN`)
 - __NODE_ENV__ (the Node.js environment that the app will run under)
-- __Path to the configuration properties file__
+- __Dir path for artifacts__ (for build, this will be where the built/compressed archive will be placed and the copied configuration properties file)
 
 Examples:
 
@@ -32,9 +32,12 @@ node-app.sh "DEPLOY" "test" "/path/to/deploy.properties"
 node-app.sh "DEPLOY_CLEAN" "production" "/path/to/deploy.clean.properties"
 ```
 
-The configuration proerties file contains the following defaults:
+The configuration `.proerties` file can contain the following properties:
 
 ```sh
+################################################
+# Properties used by the node-app.sh script for
+# building/deploying the Node.js app services
 # ----------------------------------------------
 # NOTE: during BUILD the generated artifact
 # resides at
@@ -47,13 +50,6 @@ The configuration proerties file contains the following defaults:
 
 ################################################
 # Application specific properties
-# ==============================================
-# The app name used as the systemd service, file
-# name, etc.
-# ----------------------------------------------
-# >>> REQUIRED
-# ==============================================
-app.name=
 # ==============================================
 # The app description for systemd service, etc.
 # ----------------------------------------------
@@ -84,6 +80,13 @@ app.port.number=
 # 9002, 9003 and 9004 
 # ==============================================
 app.port.count=
+# ==============================================
+# The directory where the app target/services
+# will be written
+# ----------------------------------------------
+# >>> DEFAULT: /etc/systemd/system
+# ==============================================
+app.systemd.directory=
 ################################################
 
 ################################################
@@ -144,3 +147,62 @@ nvmrc.script.directory=
 # ==============================================
 temp.directory=/tmp
 ```
+
+## Build Script
+A simple/portable bash script can be used in the `BUILD` task:
+
+```sh
+# run the script that will build, install Node.js from the apps
+# .nvmrc version (if needed), tests the app (optional), bundles
+# the app (optional, e.g. webpack, snowpack, etc.) and generates
+# a single compressed archive artifact (optional)
+# NOTE: assumes node-app.properties resides in the root dir of the app
+##################################################################################
+# $1 Execution type (required: either BUILD, DEPLOY or DEPLOY_CLEAN)
+# $2 The app name (required: must contain only alpha characters)
+# $3 The NODE_ENV value that will be set when the app is ran (optional: set when app is ran)
+# $4 Dir path for artifacts (the archive and conf properties will be placed/extracted to/from)
+APP_NAME=myapp
+REPO_VER=v0.0.0 # real version here
+WRK_DIR=/tmp/$APP_NAME
+mkdir $WRK_DIR
+wget -N -O $WRK_DIR/nvmrc.sh https://raw.githubusercontent.com/ugate/repo/$REPO_VER/nodejs/nvmrc.sh
+wget -N -O $WRK_DIR/node-app.sh https://raw.githubusercontent.com/ugate/repo/$REPO_VER/nodejs/node-app.sh
+chmod +x $WRK_DIR/nvmrc.sh
+chmod +x $WRK_DIR/node-app.sh
+$WRK_DIR/node-app.sh BUILD $APP_NAME test "./artifacts"
+exit $?
+```
+
+Using the example above and assuming `./node-app.properties` contains `app.name=myapp`, the `BUILD` task will generate the following artifacts:
+
+- `./artifacts/myapp.tar.gz` (contains the built app contents)
+- `./artifacts/myapp.properties` (contains the original `./node-app.properties` that will be needed during deployment)
+
+## Deploy Script
+A simple/portable bash script can be used in the `DEPLOY` or `DEPLOY_CLEN` task:
+
+```sh
+# run the script that will build, install Node.js from the apps
+# .nvmrc version (if needed), tests the app (optional), bundles
+# the app (optional, e.g. webpack, snowpack, etc.) and generates
+# a single compressed archive artifact (optional)
+# NOTE: assumes /tmp/$APP_NAME.tar.gz and /tmp/$APP_NAME.properties files exist
+##################################################################################
+# $1 Execution type (required: either BUILD, DEPLOY or DEPLOY_CLEAN)
+# $2 The app name (required: must contain only alpha characters)
+# $3 The NODE_ENV value that will be set when the app is ran (optional: set when app is ran)
+# $4 Dir path for artifacts (the archive and conf properties will be placed/extracted to/from)
+APP_NAME=myapp
+REPO_VER=v0.0.0 # real version here
+WRK_DIR=/tmp/$APP_NAME
+mkdir $WRK_DIR
+wget -N -O $WRK_DIR/nvmrc.sh https://raw.githubusercontent.com/ugate/repo/$REPO_VER/nodejs/nvmrc.sh
+wget -N -O $WRK_DIR/node-app.sh https://raw.githubusercontent.com/ugate/repo/$REPO_VER/nodejs/node-app.sh
+chmod +x $WRK_DIR/nvmrc.sh
+chmod +x $WRK_DIR/node-app.sh
+$WRK_DIR/node-app.sh DEPLOY $APP_NAME test "/tmp"
+exit $?
+```
+
+> __NOTE:__ There should be 
