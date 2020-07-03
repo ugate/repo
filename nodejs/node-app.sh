@@ -59,7 +59,9 @@ APP_DESC=$(confProp 'app.description')
 APP_DIR=$(confProp "app.$EXEC_TYPE.directory")
 APP_DIR=`[[ (-n "$APP_DIR") ]] && echo "$APP_DIR" || echo ""`
 APP_DIR=`[[ (-z "$APP_DIR") && (-z "$DEPLOY") ]] && echo "$PWD" || echo ""`
-APP_DIR=$(getAbsPath "$APP_DIR")
+if [[ -n "$APP_DIR" ]]; then
+  APP_DIR=$(getAbsPath "$APP_DIR")
+fi
 CMD_INSTALL=$(confProp "app.command.$EXEC_TYPE.install")
 CMD_INSTALL=`[[ (-n "$CMD_INSTALL") ]] && echo "$CMD_INSTALL" || echo "npm ci"`
 CMD_TEST=$(confProp "app.command.$EXEC_TYPE.test")
