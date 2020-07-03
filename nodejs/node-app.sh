@@ -57,10 +57,11 @@ getAbsPath() {
 
 APP_DESC=$(confProp 'app.description')
 APP_DIR=$(confProp "app.$EXEC_TYPE.directory")
-APP_DIR=`[[ (-n "$APP_DIR") ]] && echo "$APP_DIR" || echo ""`
-APP_DIR=`[[ (-z "$APP_DIR") && (-z "$DEPLOY") ]] && echo "$PWD" || echo ""`
+APP_DIR=`[[ (-z "$APP_DIR") && (-z "$DEPLOY") ]] && echo "$PWD" || echo "$APP_DIR"`
 if [[ -n "$APP_DIR" ]]; then
+  echo "$MSGI converting app.$EXEC_TYPE.directory=\"$APP_DIR\" into an absolute path"
   APP_DIR=$(getAbsPath "$APP_DIR")
+  echo "$MSGI absolute path set to app.$EXEC_TYPE.directory=\"$APP_DIR\""
 fi
 CMD_INSTALL=$(confProp "app.command.$EXEC_TYPE.install")
 CMD_INSTALL=`[[ (-n "$CMD_INSTALL") ]] && echo "$CMD_INSTALL" || echo "npm ci"`
