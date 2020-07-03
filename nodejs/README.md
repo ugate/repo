@@ -172,7 +172,7 @@ A simple/portable bash script can be used in the `BUILD` task:
 APP_NAME=myapp
 REPO_VER=v0.0.0 # real version here
 WRK_DIR=/tmp/$APP_NAME
-mkdir -p $WRK_DIR
+rm -fr $WRK_DIR && mkdir -p $WRK_DIR
 wget -N -O $WRK_DIR/nvmrc.sh https://raw.githubusercontent.com/ugate/repo/$REPO_VER/nodejs/nvmrc.sh
 wget -N -O $WRK_DIR/node-app.sh https://raw.githubusercontent.com/ugate/repo/$REPO_VER/nodejs/node-app.sh
 chmod +x $WRK_DIR/nvmrc.sh
@@ -203,7 +203,7 @@ A simple/portable bash script can be used in the `DEPLOY` or `DEPLOY_CLEN` task:
 APP_NAME=myapp
 REPO_VER=v0.0.0 # real version here
 WRK_DIR=/tmp/$APP_NAME
-mkdir -p $WRK_DIR
+rm -fr $WRK_DIR && mkdir -p $WRK_DIR
 wget -N -O $WRK_DIR/nvmrc.sh https://raw.githubusercontent.com/ugate/repo/$REPO_VER/nodejs/nvmrc.sh
 wget -N -O $WRK_DIR/node-app.sh https://raw.githubusercontent.com/ugate/repo/$REPO_VER/nodejs/node-app.sh
 chmod +x $WRK_DIR/nvmrc.sh
