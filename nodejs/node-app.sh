@@ -57,7 +57,12 @@ getAbsPath() {
 
 APP_DESC=$(confProp 'app.description')
 APP_DIR=$(confProp "app.$EXEC_TYPE.directory")
-APP_DIR=`[[ (-n "$APP_DIR") ]] && echo "$APP_DIR" || echo "$PWD"`
+APP_DIR=`[[ (-n "$APP_DIR") ]] && echo "$APP_DIR" || echo ""`
+APP_DIR=`[[ (-z "$APP_DIR") && (-z "$DEPLOY") ]] && echo "$PWD" || echo ""`
+if [[ -z "$APP_DIR" ]]; then
+  echo "$MSGI app.$EXEC_TYPE.directory is required" >&2
+  exit 1
+fi
 APP_DIR=$(getAbsPath "$APP_DIR")
 CMD_INSTALL=$(confProp "app.command.$EXEC_TYPE.install")
 CMD_INSTALL=`[[ (-n "$CMD_INSTALL") ]] && echo "$CMD_INSTALL" || echo "npm ci"`

@@ -66,9 +66,11 @@ app.description=
 # ==============================================
 # The app description for systemd service, etc.
 # ----------------------------------------------
-# >>> DEFAULT: ./
+# >>> DEFAULT: for BUILD, $PWD for DEPLOY* ""
 # ==============================================
-app.directory=
+app.BUILD.directory=
+app.DEPLOY.directory=
+app.DEPLOY_CLEAN.directory=
 # ==============================================
 # The app port number for systemd service, etc.
 # ==============================================
