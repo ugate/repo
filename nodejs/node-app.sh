@@ -123,9 +123,6 @@ elif [[ (-z "$APP_DIR") ]]; then
   echo "$MSGI app.$EXEC_TYPE.directory is required" >&2
   exit 1
 else
-  echo "$MSGI app.$EXEC_TYPE.directory invalid for $APP_DIR" >&2
-  exit 1
-else
   # DEPLOY: create new app dir
   sudo mkdir -p $APP_DIR
 fi
