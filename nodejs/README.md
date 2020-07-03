@@ -157,7 +157,7 @@ nvmrc.script.directory=
 temp.directory=/tmp
 ```
 
-## Build Script
+## Build Script <sub id="exampleBuild"></sub>
 A simple/portable bash script can be used in the `BUILD` task:
 
 ```sh
@@ -188,7 +188,7 @@ Using the example above and assuming `./node-app.properties` contains `app.name=
 - `./artifacts/myapp.tar.gz` (contains the built app contents)
 - `./artifacts/myapp.properties` (contains the original `./node-app.properties` that will be needed during deployment)
 
-## Deploy Script
+## Deploy Script <sub id="exampleDeploy"></sub>
 A simple/portable bash script can be used in the `DEPLOY` or `DEPLOY_CLEN` task:
 
 ```sh
@@ -214,4 +214,16 @@ $WRK_DIR/node-app.sh DEPLOY $APP_NAME test "/tmp"
 exit $?
 ```
 
-> __NOTE:__ There should be 
+## Bamboo
+Setting up CICD in Bamboo is fairly simple using the previous [build](#exampleBuild)/[deploy](#exampleDeploy) example tasks following the steps below:
+
+### Build
+- Add a __Source Control Checkout__ task for the repository for the app
+- Add a __Script Task__ (shell/inline) and use the [build script above](#exampleBuild)
+- Add __Artifacts__. Location: `artifacts`, Copy Pattern: `**/*.tar.gz` and Location: `artifacts`, Copy Pattern: `**/*.properties`
+
+### Deploy
+- Add a __Artifact download__ task for __Clean working directory task__
+- Add an __SCP Task__ to copy the artifacts to the deployment server. Artifacts: `...:all artifacts`, Remote Path: `/tmp`
+- Add an __SSH Task__ and copy the [deploy script above](#exampleDeploy) into the __SSH Command__
+- Rinse and repeat all steps except the __Artifact download__ for each deployment server
