@@ -4,35 +4,42 @@ The scripts provided in this directory can be used to agnostically build, instal
 The script utilizes [nvm (Node Version Management)](https://github.com/nvm-sh/nvm) so each application can define it's own `.nvmrc` file that contains the version of Node.js that should be used to build, deploy and run the app. The [`nvmrc.sh`](nvmrc.sh) script is internally called by [`node-app.sh`](node-app.sh) and will ensure that the Node.js version defined within the `.nvmrc` file is installed and used during builds and deployments as well as the version used for the running app. The `.nvmrc` file can also contain a [Node.js codename](https://github.com/nodejs/Release/blob/master/CODENAMES.md). In which case, the latest derived Node.js version for the defined codename will be installed and used during builds and deployments as well as the version used for the running app.
 
 ## Build
-The following steps are performed by [`node-app.sh`](node-app.sh):
+The following steps are performed by [`node-app.sh`](node-app.sh) for a `BUILD` (for clarity, error handling is excluded from diagram):
 
 <kbd>![Build Flow](img/build.png)</kbd>
 
 ## Deployment
-The following steps are performed by [`node-app.sh`](node-app.sh):
+The following steps are performed by [`node-app.sh`](node-app.sh) for a `DEPLOY*` (for clarity, error handling is excluded from diagram):
 
 <kbd>![Deploy Flow](img/deploy.png)</kbd>
+
+## Node.js Install (from `.nvmrc` file)
+Internally, [`node-app.sh`](node-app.sh) calls [`nvmrc.sh`](nvmrc.sh) (as seen in the previous diagrams). The following steps are performed by [`nvmrc.sh`](nvmrc.sh) (for clarity, error handling is excluded from diagram):
+
+<kbd>![Node.js Install Flow](img/nvmrc.png)</kbd>
 
 ## Build/Deploy Script
 The [`node-app.sh`](node-app.sh) should be executed using the following paramters:
 
-- __Execution type__ (either `BUILD`, `DEPLOY` or `DEPLOY_CLEAN`)
-- __NODE_ENV__ (the Node.js environment that the app will run under)
-- __Dir path for artifacts__ (for build, this will be where the built/compressed archive will be placed and the copied configuration properties file)
+- __Execution type__ - either `BUILD`, `DEPLOY` or `DEPLOY_CLEAN`
+- __The application's name__ - will be used for generated artifact names, systemd services, etc. (must contain only alpha characters)
+- __NODE_ENV__ - the environmental veriable that will be set when running the Node.js app
+- __Dir path for artifacts__ - for build, this will be where the built/compressed archive will be placed as well as the copied configuration properties file. for deployments, this is where the built atifact/archive and the copied configuration properties will be read from (each will be named `<APP_NAME>.tar.gz` and `<APP_NAME>.properties`, respectively)
 
 Examples:
 
 ```sh
-# Build the app using the specified conf file
-node-app.sh "BUILD" "development" "/path/to/build.properties"
-# Deploy the app using the specified conf file
-node-app.sh "DEPLOY" "test" "/path/to/deploy.properties"
+# Build the app using the specified artifacts dest dir
+node-app.sh BUILD myAppName development "./artifacts"
+# Deploy the app using the specified artifacts source dir
+node-app.sh DEPLOY myAppName test "/tmp"
 # Clean the app and corresponding systemd services
-# and redeploy the app using the specified conf file
-node-app.sh "DEPLOY_CLEAN" "production" "/path/to/deploy.clean.properties"
+# and redeploy the app using the specified artifacts
+# source dir
+node-app.sh DEPLOY_CLEAN myAppName production "/tmp"
 ```
 
-The configuration `.proerties` file can contain the following properties:
+Each application should contain a `node-app.properties` file in the _root_ directory fo the application. Properties contained in the file define different options that will be used for the build and deployment processes. The configuration `.proerties` file can contain the following properties:
 
 ```sh
 ################################################
