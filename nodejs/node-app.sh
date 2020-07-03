@@ -59,10 +59,6 @@ APP_DESC=$(confProp 'app.description')
 APP_DIR=$(confProp "app.$EXEC_TYPE.directory")
 APP_DIR=`[[ (-n "$APP_DIR") ]] && echo "$APP_DIR" || echo ""`
 APP_DIR=`[[ (-z "$APP_DIR") && (-z "$DEPLOY") ]] && echo "$PWD" || echo ""`
-if [[ -z "$APP_DIR" ]]; then
-  echo "$MSGI app.$EXEC_TYPE.directory is required" >&2
-  exit 1
-fi
 APP_DIR=$(getAbsPath "$APP_DIR")
 CMD_INSTALL=$(confProp "app.command.$EXEC_TYPE.install")
 CMD_INSTALL=`[[ (-n "$CMD_INSTALL") ]] && echo "$CMD_INSTALL" || echo "npm ci"`
@@ -114,7 +110,7 @@ echo "$MSGI starting using parameters \$EXEC_TYPE=\"$EXEC_TYPE\" \$NODE_ENV=\"$N
 \$APP_NAME=\"$APP_NAME\" \$APP_DIR=\"$APP_DIR\" \$NVMRC_SH_DIR=\"$NVMRC_SH_DIR\" \$CMD_INSTALL=\"$CMD_INSTALL\" \
 \$CMD_TEST=\"$CMD_TEST\" \$CMD_BUNDLE=\"$CMD_BUNDLE\" \$CMD_DEBUNDLE=\"$CMD_DEBUNDLE\" \$APP_PORT=\"$APP_PORT\" \
 \$APP_PORT_COUNT=\"$APP_PORT_COUNT\" \$APP_TMP=\"$APP_TMP\""
-if [[ (-d "$APP_DIR") ]]; then
+if [[ (-n "$APP_DIR") && (-d "$APP_DIR") ]]; then
   if [[ -n "$DEPLOY" ]]; then
     echo "$MSGI backing up $APP_DIR"
     tar -czf $APP_TMP/$APP_NAME-backup-`date +%Y%m%d_%H%M%S`.tar.gz $APP_DIR
@@ -124,7 +120,10 @@ elif [[ ("$EXEC_TYPE" == "BUILD") ]]; then
   echo "$MSGI unable to find dir $APP_DIR" >&2
   exit 1
 elif [[ (-z "$APP_DIR") ]]; then
-  echo "$MSGI app dir is required" >&2
+  echo "$MSGI app.$EXEC_TYPE.directory is required" >&2
+  exit 1
+else
+  echo "$MSGI app.$EXEC_TYPE.directory invalid for $APP_DIR" >&2
   exit 1
 else
   # DEPLOY: create new app dir
