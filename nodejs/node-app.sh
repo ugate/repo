@@ -194,8 +194,9 @@ if [[ -n "$DEPLOY" ]]; then
     echo "$MSGI extracting app contents from $ARTIFACT_ARCHIVE to $APP_DIR"
     tar --warning=no-timestamp --strip-components=1 -xzvf $ARTIFACT_ARCHIVE -C $APP_DIR
     [[ $? != 0 ]] && { echo "$MSGI failed to extract $ARTIFACT_ARCHIVE to $APP_DIR" >&2; exit 1; }
-    # remove extracted app archive
+    # remove extracted app archive/conf
     sudo rm -f $ARTIFACT_ARCHIVE
+    sudo rm -f $CONF_PATH
   else
     echo "$MSGI missing archive at $ARTIFACT_ARCHIVE" >&2
     exit 1
