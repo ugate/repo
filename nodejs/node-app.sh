@@ -116,7 +116,7 @@ echo "$MSGI starting using parameters \$EXEC_TYPE=\"$EXEC_TYPE\" \$NODE_ENV=\"$N
 if [[ (-n "$APP_DIR") && (-d "$APP_DIR") ]]; then
   if [[ -n "$DEPLOY" ]]; then
     echo "$MSGI backing up $APP_DIR"
-    tar -czf $APP_TMP/$APP_NAME-backup-`date +%Y%m%d_%H%M%S`.tar.gz $APP_DIR
+    tar --exclude="$APP_DIR/node_modules" --exclude="$APP_DIR/web_modules" -czf $APP_TMP/$APP_NAME-backup-`date +%Y%m%d_%H%M%S`.tar.gz $APP_DIR
     [[ $? != 0 ]] && { echo "$MSGI failed to backup $APP_DIR to $APP_TMP" >&2; exit 1; }
   fi
 elif [[ ("$EXEC_TYPE" == "BUILD") ]]; then
