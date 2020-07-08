@@ -56,6 +56,7 @@ getAbsPath() {
 }
 
 APP_DESC=$(confProp 'app.description')
+APP_DESC=`[[ -n "$APP_DESC" ]] && echo "$APP_DESC" || echo "$APP_NAME"`
 APP_DIR=$(confProp "app.$EXEC_TYPE.directory")
 APP_DIR=`[[ (-z "$APP_DIR") && (-z "$DEPLOY") ]] && echo "$PWD" || echo "$APP_DIR"`
 if [[ -n "$APP_DIR" ]]; then
