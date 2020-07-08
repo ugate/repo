@@ -25,7 +25,7 @@ HOSTNAME=$(hostname -s)
 MSGI="$EXEC_TYPE ($HOSTNAME):"
 DEPLOY=`[[ "$EXEC_TYPE" =~ ^DEPLOY ]] && echo "DEPLOY" || echo ""`
 CLEAN=`[[ "$EXEC_TYPE" =~ CLEAN$ ]] && echo "CLEAN" || echo ""`
-PROPS_PATH=`[[ -z "$DEPLOY" ]] && echo "./node-app.properties" || echo "$ARTIFACTS_PATH/$APP_NAME.properties"`
+APP_PROPS_PATH=`[[ -z "$DEPLOY" ]] && echo "./node-app.properties" || echo "$ARTIFACTS_PATH/$APP_NAME.properties"`
 
 ARGS="\$1=\"$1\" \$2=\"$2\" \$3=\"$3\" \$4=\"$4\""
 if [[ -z "$EXEC_TYPE" ]]; then
@@ -37,13 +37,13 @@ elif [[ "$APP_NAME" =~ [^a-zA-Z] ]]; then
 elif [[ -z "$ARTIFACTS_PATH" || ((-n "$DEPLOY") && ( ! -d "$ARTIFACTS_PATH")) ]]; then
   echo "$MSGI missing or invalid artifacts directory path at argument \$4 [ARGS: $ARGS]" >&2
   exit 1
-elif [[ ! -r "$PROPS_PATH" ]]; then
-  echo "$MSGI missing configuration properties file at $PROPS_PATH [ARGS: $ARGS]" >&2
+elif [[ ! -r "$APP_PROPS_PATH" ]]; then
+  echo "$MSGI missing configuration properties file at $APP_PROPS_PATH [ARGS: $ARGS]" >&2
   exit 1
 fi
 
 confProp() {
-  sed -rn "s/^${1}=([^\n]+)$/\1/p" ${PROPS_PATH}
+  sed -rn "s/^${1}=([^\n]+)$/\1/p" ${APP_PROPS_PATH}
 }
 getAbsPath() {
   local filename=$1
@@ -110,7 +110,7 @@ setServices() {
   fi
 }
 
-echo "$MSGI starting using parameters \$EXEC_TYPE=\"$EXEC_TYPE\" \$NODE_ENV=\"$NODE_ENV\" \$PROPS_PATH=\"$PROPS_PATH\" \
+echo "$MSGI starting using parameters \$EXEC_TYPE=\"$EXEC_TYPE\" \$NODE_ENV=\"$NODE_ENV\" \$APP_PROPS_PATH=\"$APP_PROPS_PATH\" \
 \$APP_NAME=\"$APP_NAME\" \$APP_DIR=\"$APP_DIR\" \$NVMRC_SH_DIR=\"$NVMRC_SH_DIR\" \$CMD_INSTALL=\"$CMD_INSTALL\" \
 \$CMD_TEST=\"$CMD_TEST\" \$CMD_BUNDLE=\"$CMD_BUNDLE\" \$CMD_DEBUNDLE=\"$CMD_DEBUNDLE\" \$APP_PORT=\"$APP_PORT\" \
 \$APP_PORT_COUNT=\"$APP_PORT_COUNT\" \$APP_TMP=\"$APP_TMP\""
@@ -197,7 +197,7 @@ if [[ -n "$DEPLOY" ]]; then
     [[ $? != 0 ]] && { echo "$MSGI failed to extract $ARTIFACT_ARCHIVE to $APP_DIR" >&2; exit 1; }
     # remove extracted app archive/conf
     sudo rm -f $ARTIFACT_ARCHIVE
-    sudo rm -f $PROPS_PATH
+    sudo rm -f $APP_PROPS_PATH
   else
     echo "$MSGI missing archive at $ARTIFACT_ARCHIVE" >&2
     exit 1
@@ -308,9 +308,9 @@ if [[ ("$EXEC_TYPE" == "BUILD") ]]; then
   tar --exclude='./*git*' --exclude='./node_modules' --exclude='*.gz' --exclude="$ARTIFACTS_PATH" -czvf $ARTIFACT_ARCHIVE .
   [[ $? != 0 ]] && { echo "$MSGI failed to create app archive $ARTIFACT_ARCHIVE (PWD=$PWD)" >&2; exit 1; }
   ARTIFACT_CONF="$ARTIFACTS_PATH/$APP_NAME.properties"
-  echo "$MSGI copying $PROPS_PATH to $ARTIFACT_CONF"
-  cp -f $PROPS_PATH $ARTIFACT_CONF
-  [[ $? != 0 ]] && { echo "$MSGI failed to copy configuration properties file from $PROPS_PATH to $ARTIFACT_CONF (PWD=$PWD)" >&2; exit 1; }
+  echo "$MSGI copying $APP_PROPS_PATH to $ARTIFACT_CONF"
+  cp -f $APP_PROPS_PATH $ARTIFACT_CONF
+  [[ $? != 0 ]] && { echo "$MSGI failed to copy configuration properties file from $APP_PROPS_PATH to $ARTIFACT_CONF (PWD=$PWD)" >&2; exit 1; }
 else
   # execute debundle
   execCmdCICD "$CMD_DEBUNDLE" "debundling"
