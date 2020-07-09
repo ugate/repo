@@ -3,22 +3,37 @@ The scripts provided in this directory can be used to agnostically build, instal
 
 The script utilizes [nvm (Node Version Management)](https://github.com/nvm-sh/nvm) so each application can define it's own `.nvmrc` file that contains the version of Node.js that should be used to build, deploy and run the app. The [`nvmrc.sh`](nvmrc.sh) script is internally called by [`node-app.sh`](node-app.sh) and will ensure that the Node.js version defined within the `.nvmrc` file is installed and used during builds and deployments as well as the version used for the running app. The `.nvmrc` file can also contain a [Node.js codename](https://github.com/nodejs/Release/blob/master/CODENAMES.md). In which case, the latest derived Node.js version for the defined codename will be installed and used during builds and deployments as well as the version used for the running app.
 
-## Build
+## TOC
+- [Build Flow](#nodeAppBuild)
+- [Deply Flow](#nodeAppDeploy)
+- [HTTP/S Server Flow](#httpdApp) [(`httpd-app.sh`)](httpd-app.sh)
+- [Node.js Install Script](#nodeInstall) [(`nvmrc.sh`)](nvmrc.sh)
+- [Build/Deploy Script](#nodeApp) [(`node-app.sh`)](node-app.sh)
+- [Example Build](#exampleBuild)
+- [Example Deploy](#exampleDeploy)
+- [Example Bamboo](#exampleBamboo)
+
+## Build <a name="nodeAppBuild"></a>
 The following steps are performed by [`node-app.sh`](node-app.sh) for a `BUILD` (for clarity, error handling is excluded from diagram):
 
 <kbd>![Build Flow](img/build.png)</kbd>
 
-## Deployment
+## Deployment <a name="nodeAppDeploy"></a>
 The following steps are performed by [`node-app.sh`](node-app.sh) for a `DEPLOY*` (for clarity, error handling is excluded from diagram):
 
 <kbd>![Deploy Flow](img/deploy.png)</kbd>
 
-## Node.js Install (from `.nvmrc` file)
+## Node.js Install (from `.nvmrc` file) <a name="nodeInstall"></a>
 Internally, [`node-app.sh`](node-app.sh) calls [`nvmrc.sh`](nvmrc.sh) (as seen in the previous diagrams). The following steps are performed by [`nvmrc.sh`](nvmrc.sh) (for clarity, error handling is excluded from diagram):
 
 <kbd>![Node.js Install Flow](img/nvmrc.png)</kbd>
 
-## Build/Deploy Script
+## HTTP/S Server <a name="httpdApp"></a>
+The [`httpd-app.sh`](httpd-app.sh) can be used independently of any Node.js specific app installation. When invoked by [`node-app.sh`](node-app.sh) will utilize the same `.properties` file used by [`httpd-app.sh` (click for default/available properties)](httpd-app.sh).
+
+<kbd>![HTTP/S ServerFlow](img/httpd.png)</kbd>
+
+## Build/Deploy Script <a name="nodeApp"></a>
 The [`node-app.sh`](node-app.sh) should be executed using the following paramters:
 
 - __Execution type__ - either `BUILD`, `DEPLOY` or `DEPLOY_CLEAN`
@@ -59,16 +74,14 @@ Each application should contain a `node-app.properties` file in the _root_ direc
 # Application specific properties
 # ==============================================
 # The app description for systemd service, etc.
-# ----------------------------------------------
-# >>> REQUIRED
 # ==============================================
-app.description=
+app.description=${PASSED_APP_NAME}
 # ==============================================
 # The app description for systemd service, etc.
 # ----------------------------------------------
-# >>> DEFAULT: for BUILD, $PWD for DEPLOY* ""
+# >>> REQUIRED
 # ==============================================
-app.BUILD.directory=
+app.BUILD.directory=${PWD}
 app.DEPLOY.directory=
 app.DEPLOY_CLEAN.directory=
 # ==============================================
@@ -88,14 +101,12 @@ app.port.number=
 # of 4 would result in 4 services at ports 9001,
 # 9002, 9003 and 9004 
 # ==============================================
-app.port.count=
+app.port.count=${CAL_CPU_COUNT}
 # ==============================================
 # The directory where the app target/services
 # will be written
-# ----------------------------------------------
-# >>> DEFAULT: /etc/systemd/system
 # ==============================================
-app.systemd.directory=
+app.systemd.directory=/etc/systemd/system
 ################################################
 
 ################################################
@@ -138,26 +149,84 @@ app.command.DEPLOY.debundle=
 app.command.DEPLOY_CLEAN.debundle=
 ################################################
 
+################################################
+# HTTP server properties for httpd-app.sh
+# ==============================================
+# The HTTP server type to use (omit for none).
+# The type can be one of the following values:
+# - apache
+# ==============================================
+httpd.type=
+# ==============================================
+# The destination of the app conf that will be
+# written to using the app name as the file name
+# ==============================================
+httpd.app.conf.dir=/etc/httpd/conf.d
+# ==============================================
+# The port that will be used by the apps virtual
+# host (the httpd server should already be
+# listening on the chosen port).
+# ==============================================
+httpd.app.port=80
+# ==============================================
+# The context path to the app
+# ==============================================
+httpd.app.path=/
+# ==============================================
+# The domain used in the alias, logs, etc.
+# When defined, the app name is considered to be
+# a 3rd level domain. For example, if the domain
+# is "example.com" with an app name of "myapp"
+# and a machine name of "myserver01" (when the
+# server conttains no numeric value, it will be
+# omitted from the entries below):
+# ----------------------------------------------
+# # assuming httpd.type=apache
+# ServerName myapp01.example.com
+# ServerAlias myapp myapp01 myapp01.example.com
+# ----------------------------------------------
+# When the domain is undefined and the app name
+# is "myapp":
+# ----------------------------------------------
+# # assuming httpd.type=apache
+# ServerName myapp
+# ==============================================
+httpd.app.domain=
+# ==============================================
+# The sticky session identifier that will ensure
+# that all subsequent requests from the user
+# will be routed through the same route instead
+# of being load balanced (e.g. JSESSIONID, etc.)
+# ==============================================
+httpd.app.stickysession=
+# ==============================================
+# The load balancing scheduler algorithm to use
+# for vertical scaling. See the specific httpd
+# server docs for valid values.
+# ==============================================
+httpd.app.lbmethod=${DEFAULT_FOR_HTTP_SERVER}
+# ==============================================
+# The directory to the httpd-app.sh script that
+# will be ran from node-app.sh (omit to is false)
+# ==============================================
+httpd.script.directory=${CALLING_SCRIPT_DIR}
+################################################
+
 # ==============================================
 # The directory to where the nvmrc.sh is located
 # Used to install Node.js based upon the .nvmrc
 # file located in the root of the app directory
-# ----------------------------------------------
-# >>> DEFAULT: the same path of the calling
-# shell script
 # ==============================================
-nvmrc.script.directory=
+nvmrc.script.directory=${CALLING_SCRIPT_DIR}
 
 # ==============================================
 # The directory to where temporary files will be
 # stored
-# ----------------------------------------------
-# >>> REQUIRED
 # ==============================================
 temp.directory=/tmp
 ```
 
-## Build Script <sub id="exampleBuild"></sub>
+## Build Script <a name="exampleBuild"></a>
 A simple/portable bash script can be used in the `BUILD` task:
 
 ```sh
@@ -188,7 +257,7 @@ Using the example above and assuming `./node-app.properties` contains `app.name=
 - `./artifacts/myapp.tar.gz` (contains the built app contents)
 - `./artifacts/myapp.properties` (contains the original `./node-app.properties` that will be needed during deployment)
 
-## Deploy Script <sub id="exampleDeploy"></sub>
+## Deploy Script <a name="exampleDeploy"></a>
 A simple/portable bash script can be used in the `DEPLOY` or `DEPLOY_CLEN` task:
 
 ```sh
@@ -214,7 +283,7 @@ $WRK_DIR/node-app.sh DEPLOY $APP_NAME test "/tmp"
 exit $?
 ```
 
-## Bamboo
+## Bamboo <a name="exampleBamboo"></a>
 Setting up CICD in Bamboo is fairly simple using the previous [build](#exampleBuild)/[deploy](#exampleDeploy) example tasks following the steps below:
 
 ### Build

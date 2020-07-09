@@ -1,0 +1,1 @@
+Flow diagrams can be edited via [draw.io](draw.io)/[app.diagrams.net](https://app.diagrams.net/) using the `.png` files from the __Device__.
