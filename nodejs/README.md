@@ -163,9 +163,14 @@ httpd.type=
 # ==============================================
 httpd.app.conf.dir=/etc/httpd/conf.d
 # ==============================================
-# The context path to the app
+# The context path to the "back-end" app
 # ==============================================
 httpd.app.path=/
+# ==============================================
+# The context path to the app via the HTTP/S
+# server via reverse proxy
+# ==============================================
+httpd.proxy.path=/
 # ==============================================
 # The domain used in the alias, logs, etc.
 # When defined, the app name is considered to be

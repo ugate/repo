@@ -14,6 +14,7 @@ HTTPD_PROPS_PATH=$([[ -n "$1" ]] && echo "$1" || echo "$APP_PROPS_PATH")
 HTTPD_APP_NAME=$([[ -n "$2" ]] && echo "$2" || echo "$APP_NAME")
 HTTPD_APP_DIR=$([[ -n "$3" ]] && echo "$3" || echo "$APP_DIR")
 HTTPD_SERVICES=$([[ -n "$4" ]] && echo "$4" || echo "$SERVICES")
+HTTPD_HOSTNAME_FQDN=$(hostname)
 HTTPD_HOSTNAME=$(hostname -s)
 HTTPD_HOST_NUM=$(echo "$HTTPD_HOSTNAME" | sed -rn "s/^[^0-9]*?([0-9]+).*$/\1/p")
 HTTPD_MSGI=$([[ -z "$MSGI" ]] && echo "HTTPD ($HTTPD_HOSTNAME):" || echo "HTTPD $MSGI")
@@ -42,10 +43,13 @@ HTTPD_APP_STICKY=$([[ -n "$HTTPD_APP_SID" ]] && echo "stickysession=$HTTPD_APP_S
 HTTPD_APP_STICKY_LOG=$([[ -n "$HTTPD_APP_SID" ]] && echo " \\\"%{$HTTPD_APP_SID}C\\\"" || echo "")
 HTTPD_LBMETHOD=$(httpdConfProp "httpd.app.lbmethod")
 HTTPD_LBMETHOD=$([[ -n "$HTTPD_LBMETHOD" ]] && echo "$HTTPD_LBMETHOD" || echo "byrequests")
-HTTPD_CTX_PATH=$(httpdConfProp "httpd.app.path")
-HTTPD_CTX_PATH=$([[ -n "$HTTPD_CTX_PATH" ]] && echo "$HTTPD_CTX_PATH" || echo "/")
-HTTPD_SVR_ALIAS=$([[ -n "$HTTPD_APP_DOMAIN" ]] && echo "${HTTPD_APP_NAME}${HTTPD_HOST_NUM}.${HTTPD_APP_DOMAIN}" || echo "$HTTPD_APP_NAME")
-HTTPD_SVR_ADMIN=$([[ -n "$HTTPD_APP_DOMAIN" ]] && echo "$USER@$HTTPD_APP_DOMAIN" || echo "$USER@$HTTPD_HOSTNAME")
+HTTPD_APP_PATH=$(httpdConfProp "httpd.app.path")
+HTTPD_APP_PATH=$([[ -n "$HTTPD_APP_PATH" ]] && echo "$HTTPD_APP_PATH" || echo "/")
+HTTPD_APP_FQDN_DOMAIN=$([[ -n "$HTTPD_APP_DOMAIN" ]] && echo "${HTTPD_APP_NAME}.${HTTPD_APP_DOMAIN}" || echo "$HTTPD_HOSTNAME_FQDN")
+HTTPD_PROXY_PATH=$(httpdConfProp "httpd.proxy.path")
+HTTPD_PROXY_PATH=$([[ -n "$HTTPD_PROXY_PATH" ]] && echo "$HTTPD_PROXY_PATH" || echo "/")
+HTTPD_SVR_ALIAS=$([[ -n "$HTTPD_APP_DOMAIN" ]] && echo "${HTTPD_APP_NAME}${HTTPD_HOST_NUM}.${HTTPD_APP_DOMAIN}" || echo "")
+HTTPD_SVR_ADMIN=$([[ -n "$HTTPD_APP_DOMAIN" ]] && echo "$USER@$HTTPD_APP_DOMAIN" || echo "$USER@$HTTPD_HOSTNAME_FQDN")
 
 if [[ ! -d "$HTTPD_APP_CONF_DIR" ]]; then
   echo "$HTTPD_MSGI missing or invalid app directory \"$HTTPD_APP_DIR\" at argument \$3 (must be a valid directory path) [ARGS: $HTTPD_ARGS]" >&2
@@ -53,7 +57,7 @@ if [[ ! -d "$HTTPD_APP_CONF_DIR" ]]; then
 fi
 
 # build listening ports for virtual host
-# ${HTTPD_HOSTNAME}:${HTTPD_APP_PORT}${HTTPD_CTX_PATH}
+# ${HTTPD_HOSTNAME_FQDN}:${HTTPD_APP_PORT}${HTTPD_APP_PATH}
 # sed -rn "s/^Listen ([^\n]+)$/\1/p" ${HTTPD_CONF_PATH}
 HTTPD_SS_PORTS=$(sudo ss -tulwnHp | grep httpd | sed -rn "s/.*:([0-9]+).*/\1/p")
 for httpd_ss_port in $HTTPD_SS_PORTS; do
@@ -78,16 +82,19 @@ for httpd_svc in $HTTPD_SERVICES; do
     echo "$HTTPD_MSGI failed to extract port number from: $httpd_svc" >&2
     exit 1;
   fi
-  echo "$HTTPD_MSGI load balance member discovered on port: $HTTPD_PORT"
+  HTTPD_BAL_URL="http://${HTTPD_APP_FQDN_DOMAIN}:${HTTPD_PORT}${HTTPD_APP_PATH}"
+  echo "$HTTPD_MSGI load balance member being added for $HTTPD_BAL_URL"
   HTTPD_BAL_MEMBS=$([[ -n "$HTTPD_BAL_MEMBS" ]] && echo "$HTTPD_BAL_MEMBS " || echo "")
   # apache specific balancer member content
-  HTTPD_BAL_MEMBER="BalancerMember http://localhost:${HTTPD_PORT} route=server${HTTPD_PORT}"
+  HTTPD_BAL_MEMBER="BalancerMember $HTTPD_BAL_URL route=server${HTTPD_PORT}"
   HTTPD_BAL_MEMBS=$( printf "$HTTPD_BAL_MEMBS\n%s\n" "$HTTPD_BAL_MEMBER")
 done
 
 # virtual host content
 HTTPD_SVR_NAME=$([[ -n "$HTTPD_APP_DOMAIN" ]] && printf "\nServerName %s\n" "${HTTPD_APP_NAME}.${HTTPD_APP_DOMAIN}" || echo "")
 HTTPD_SVR_ALIAS=$([[ -n "$HTTPD_SVR_ALIAS" ]] && printf "\nServerAlias %s\n" "$HTTPD_SVR_ALIAS" || echo "")
+HTTPD_PROXY_COOKIE_PATH=$([[ "$HTTPD_APP_PATH" == "$HTTPD_PROXY_PATH"  ]] && echo "" || echo "ProxyPassReverseCookiePath $HTTPD_PROXY_PATH $HTTPD_APP_PATH")
+HTTPD_PROXY_COOKIE_DOMAIN=$([[ "$HTTPD_APP_FQDN_DOMAIN" == "$HTTPD_HOSTNAME_FQDN"  ]] && echo "" || echo "ProxyPassReverseCookieDomain $HTTPD_APP_FQDN_DOMAIN $HTTPD_HOSTNAME_FQDN")
 HTTPD_VH_CONF=$([[ -z "$HTTPD_BAL_MEMBS" ]] && echo "" || echo "
 <VirtualHost $HTTPD_VH_LISTEN>
   LoadModule proxy_ajp_module modules/mod_proxy_ajp.so
@@ -121,7 +128,7 @@ HTTPD_VH_CONF=$([[ -z "$HTTPD_BAL_MEMBS" ]] && echo "" || echo "
     </Proxy>
 
     # allow changes via apache web gui (mod_proxy_balancer)
-    <Location /balancer-manager>
+    <Location /${HTTPD_APP_NAME}-balancer-manager>
       SetHandler balancer-manager
 
       # private net access only
@@ -137,11 +144,11 @@ HTTPD_VH_CONF=$([[ -z "$HTTPD_BAL_MEMBS" ]] && echo "" || echo "
       # Require host example.com
     </Location>
 
-    ProxyPass /balancer-manager !
-    ProxyPass $HTTPD_CTX_PATH balancer://${HTTPD_APP_NAME}Cluster/ $HTTPD_APP_STICKY
-    ProxyPassReverse $HTTPD_CTX_PATH balancer://${HTTPD_APP_NAME}Cluster/ $HTTPD_APP_STICKY
-    ProxyPassReverseCookiePath /${HTTPD_APP_NAME} $HTTPD_CTX_PATH
-    ProxyPassReverseCookieDomain localhost $HTTPD_APP_NAME
+    ProxyPass /${HTTPD_APP_NAME}-balancer-manager !
+    ProxyPass $HTTPD_PROXY_PATH balancer://${HTTPD_APP_NAME}Cluster $HTTPD_APP_STICKY
+    ProxyPassReverse $HTTPD_PROXY_PATH balancer://${HTTPD_APP_NAME}Cluster $HTTPD_APP_STICKY
+    $HTTPD_PROXY_COOKIE_PATH
+    $HTTPD_PROXY_COOKIE_DOMAIN
   </IfModule>
 </VirtualHost>
 ")
