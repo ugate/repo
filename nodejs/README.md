@@ -163,12 +163,6 @@ httpd.type=
 # ==============================================
 httpd.app.conf.dir=/etc/httpd/conf.d
 # ==============================================
-# The port that will be used by the apps virtual
-# host (the httpd server should already be
-# listening on the chosen port).
-# ==============================================
-httpd.app.port=80
-# ==============================================
 # The context path to the app
 # ==============================================
 httpd.app.path=/
