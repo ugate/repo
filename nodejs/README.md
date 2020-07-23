@@ -168,27 +168,47 @@ httpd.app.conf.dir=/etc/httpd/conf.d
 httpd.app.path=/
 # ==============================================
 # The context path to the app via the HTTP/S
-# server via reverse proxy
+# server via reverse proxy (must be absolute,
+# contain no spaces and contain no path segments
+# : ".")
 # ==============================================
 httpd.proxy.path=/
+# ==============================================
+# A path relative to app directory to serve
+# static files via the HTTP/S server rather than
+# the app (must be relative, contain no spaces
+# and contain no path segments: "."). More than
+# one path can be defined using space delimited
+# paths: httpd.app.static.path=static public
+# ==============================================
+httpd.app.static.path=
+# ==============================================
+# An optional alias context path relative to
+# app.proxy.path to serve static files via the
+# HTTP/S server rather than the app (must be
+# relative, contain no spaces and contain no
+# path segments: "."). More than one alias can
+# be defined using space delimited alias paths
+# (each corresponding to the static path at the
+# same position). For example,
+# httpd.app.static.path=public/js public/css
+# httpd.app.static.alias=js css
+# would result in "public/js" being aliased as
+# "js" and "public/css" as "css".
+# ==============================================
+httpd.app.static.alias=
 # ==============================================
 # The domain used in the alias, logs, etc.
 # When defined, the app name is considered to be
 # a 3rd level domain. For example, if the domain
 # is "example.com" with an app name of "myapp"
 # and a machine name of "myserver01" (when the
-# server conttains no numeric value, it will be
+# server contains no numeric value, it will be
 # omitted from the entries below):
 # ----------------------------------------------
 # # assuming httpd.type=apache
 # ServerName myapp01.example.com
 # ServerAlias myapp myapp01 myapp01.example.com
-# ----------------------------------------------
-# When the domain is undefined and the app name
-# is "myapp":
-# ----------------------------------------------
-# # assuming httpd.type=apache
-# ServerName myapp
 # ==============================================
 httpd.app.domain=
 # ==============================================

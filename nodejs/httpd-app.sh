@@ -7,7 +7,7 @@
 ##################################################################################
 # $1 The proprties file that contains the configuration (required: can also use export APP_PROPS_PATH)
 # $2 The app name (required: must contain only alpha characters, can also use export $APP_NAME)
-# $3 The app directory path (required: can also use export $APP_DIR)
+# $3 The absolute app directory path (required: can also use export $APP_DIR)
 # $4 Space delimited port numbers that will be load balanced (required, can also contain systemd
 # service names with a numeric port- "myapp@8080.service", can also use export $SERVICES)
 HTTPD_PROPS_PATH=$([[ -n "$1" ]] && echo "$1" || echo "$APP_PROPS_PATH")
@@ -50,9 +50,20 @@ HTTPD_PROXY_PATH=$(httpdConfProp "httpd.proxy.path")
 HTTPD_PROXY_PATH=$([[ -n "$HTTPD_PROXY_PATH" ]] && echo "$HTTPD_PROXY_PATH" || echo "/")
 HTTPD_SVR_ALIAS=$([[ -n "$HTTPD_APP_DOMAIN" ]] && echo "${HTTPD_APP_NAME}${HTTPD_HOST_NUM}.${HTTPD_APP_DOMAIN}" || echo "")
 HTTPD_SVR_ADMIN=$([[ -n "$HTTPD_APP_DOMAIN" ]] && echo "$USER@$HTTPD_APP_DOMAIN" || echo "$USER@$HTTPD_HOSTNAME_FQDN")
+HTTPD_APP_STATIC=$(httpdConfProp "httpd.app.static.path")
+HTTPD_APP_STATIC_ALIAS=$(httpdConfProp "httpd.app.static.alias")
 
 if [[ ! -d "$HTTPD_APP_CONF_DIR" ]]; then
   echo "$HTTPD_MSGI missing or invalid app directory \"$HTTPD_APP_DIR\" at argument \$3 (must be a valid directory path) [ARGS: $HTTPD_ARGS]" >&2
+  exit 1
+elif [[ "$HTTPD_PROXY_PATH" =~ \. || ! "$HTTPD_PROXY_PATH" =~ ^\/.* || "$HTTPD_PROXY_PATH" =~ ( ) ]]; then
+  echo "$HTTPD_MSGI httpd.proxy.path should not contain any path segments (i.e. no \".\"), must be absolute and contain no spaces, but found: \"$HTTPD_PROXY_PATH\"" >&2
+  exit 1
+elif [[ "$HTTPD_APP_STATIC" =~ \. || "$HTTPD_APP_STATIC" =~ ^\/.* ]]; then
+  echo "$HTTPD_MSGI httpd.app.static.path should not contain any path segments (i.e. no \".\") and must be relative, but found: \"$HTTPD_APP_STATIC\"" >&2
+  exit 1
+elif [[ "$HTTPD_APP_STATIC_ALIAS" =~ \. || "$HTTPD_APP_STATIC_ALIAS" =~ ^\/.* ]]; then
+  echo "$HTTPD_MSGI httpd.app.static.alias should not contain any path segments (i.e. no \".\") and must be relative, but found: \"$HTTPD_APP_STATIC_ALIAS\"" >&2
   exit 1
 fi
 
@@ -95,6 +106,37 @@ HTTPD_SVR_NAME=$([[ -n "$HTTPD_APP_DOMAIN" ]] && printf "\nServerName %s\n" "${H
 HTTPD_SVR_ALIAS=$([[ -n "$HTTPD_SVR_ALIAS" ]] && printf "\nServerAlias %s\n" "$HTTPD_SVR_ALIAS" || echo "")
 HTTPD_PROXY_COOKIE_PATH=$([[ "$HTTPD_APP_PATH" == "$HTTPD_PROXY_PATH"  ]] && echo "" || echo "ProxyPassReverseCookiePath $HTTPD_PROXY_PATH $HTTPD_APP_PATH")
 HTTPD_PROXY_COOKIE_DOMAIN=$([[ "$HTTPD_APP_FQDN_DOMAIN" == "$HTTPD_HOSTNAME_FQDN"  ]] && echo "" || echo "ProxyPassReverseCookieDomain $HTTPD_APP_FQDN_DOMAIN $HTTPD_HOSTNAME_FQDN")
+# build zero or more static directories w/optional aliases (at the same space delimited index)
+if [[ -n "$HTTPD_APP_STATIC" ]]; then
+  # grant read access so that the apache/etc user can serve the static files
+  sudo chmod -R +rx "${HTTPD_APP_DIR}"
+  [[ $? != 0 ]] && { echo "$HTTPD_MSGI failed to grant read privileges to ${HTTPD_APP_DIR} in order to serve static content" >&2; exit 1; }
+  httpd_alias_index=1
+  for httpd_static_item in $HTTPD_APP_STATIC; do
+    httpd_alias_item=""
+    if [[ -n "$HTTPD_APP_STATIC_ALIAS" && ("$HTTPD_APP_STATIC_ALIAS" =~ ( ) || "$httpd_alias_index" == 1) ]]; then
+      httpd_alias_item=$(echo "$HTTPD_APP_STATIC_ALIAS" | cut -d' ' -f$httpd_alias_index)
+    fi
+    httpd_alias_index=$(($httpd_alias_index + 1))
+    if [[ -n "$httpd_alias_item" ]]; then
+      HTTPD_STATIC_CONTENT="$HTTPD_STATIC_CONTENT
+      Alias ${HTTPD_PROXY_PATH}/${httpd_alias_item} \"${HTTPD_APP_DIR}/${httpd_static_item}\"
+      "
+    fi
+    # grant read access so that the apache/etc user can serve the static files
+    sudo chmod -R +rx "${HTTPD_APP_DIR}/${httpd_static_item}"
+    [[ $? != 0 ]] && { echo "$HTTPD_MSGI failed to grant read privileges to ${HTTPD_APP_DIR}/${httpd_static_item} in order to serve static content" >&2; exit 1; }
+    HTTPD_STATIC_CONTENT="$HTTPD_STATIC_CONTENT
+    # serve static content via directory
+    <Directory \"${HTTPD_APP_DIR}/${httpd_static_item}\">
+      Options Indexes FollowSymLinks MultiViews
+      Require all granted
+    </Directory>
+    # prevent pass through proxy for static content
+    ProxyPass \"${HTTPD_PROXY_PATH}/${httpd_static_item}\" !
+    "
+  done
+fi
 HTTPD_VH_CONF=$([[ -z "$HTTPD_BAL_MEMBS" ]] && echo "" || echo "
 <VirtualHost $HTTPD_VH_LISTEN>
   LoadModule proxy_ajp_module modules/mod_proxy_ajp.so
@@ -120,10 +162,9 @@ HTTPD_VH_CONF=$([[ -z "$HTTPD_BAL_MEMBS" ]] && echo "" || echo "
       $HTTPD_BAL_MEMBS
 
       # accessibility
-      Order Allow,Deny
-      Allow from all
+      Require all granted
 
-      # round-robin style load balancer
+      # default: byrequests = round-robin style load balancer
       ProxySet lbmethod=$HTTPD_LBMETHOD
     </Proxy>
 
@@ -142,9 +183,10 @@ HTTPD_VH_CONF=$([[ -z "$HTTPD_BAL_MEMBS" ]] && echo "" || echo "
 
       # alternative host access
       # Require host example.com
-    </Location>
 
-    ProxyPass /${HTTPD_APP_NAME}-balancer-manager !
+      ProxyPass !
+    </Location>
+    $HTTPD_STATIC_CONTENT
     ProxyPass $HTTPD_PROXY_PATH balancer://${HTTPD_APP_NAME}Cluster $HTTPD_APP_STICKY
     ProxyPassReverse $HTTPD_PROXY_PATH balancer://${HTTPD_APP_NAME}Cluster $HTTPD_APP_STICKY
     $HTTPD_PROXY_COOKIE_PATH
@@ -169,12 +211,12 @@ if [[ "$HTTPD_APP_CONF_TYPE" == "NEW" || "$HTTPD_VH_CONF" != $(cat "$HTTPD_APP_C
   HTTPD_SVC_FAILED=$?
   HTTPD_SVC_JOURNAL=$(sudo journalctl -u httpd.service -x -n 10 --no-pager)
   if [[ "$HTTPD_SVC_FAILED" != 0 ]]; then
-    printf "$MSGI failed to restart httpd service:\n\n%s\n\n" "$HTTPD_SVC_JOURNAL" >&2
+    printf "$HTTPD_MSGI failed to restart httpd service:\n\n%s\n\n" "$HTTPD_SVC_JOURNAL" >&2
     sudo rm -f "$HTTPD_APP_CONF_PATH"
     sudo systemctl start httpd
     exit 1
   else
-    printf "$MSGI successfully restarted httpd service:\n\n%s\n\n" "$HTTPD_SVC_JOURNAL" >&2
+    printf "$HTTPD_MSGI successfully restarted httpd service:\n\n%s\n\n" "$HTTPD_SVC_JOURNAL" >&2
   fi
 else
   echo "$HTTPD_MSGI skipping virtual host write to $HTTPD_APP_CONF_PATH since there are not any pending changes"
